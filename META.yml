@@ -1,0 +1,13 @@
+# http://module-build.sourceforge.net/META-spec.html
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         FabForce-DBDesigner4
+version:      0.01
+version_from: lib/FabForce/DBDesigner4.pm
+installdirs:  site
+requires:
+    IO::File:                      1.1
+    XML::Twig:                     3.17
+    XML::Writer:                   0.6
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.17

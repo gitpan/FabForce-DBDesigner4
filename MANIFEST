@@ -1,0 +1,7 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/FabForce-DBDesigner4.t
+lib/FabForce/DBDesigner4.pm
+META.yml                                 Module meta-data (added by MakeMaker)
