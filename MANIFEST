@@ -4,4 +4,7 @@ MANIFEST
 README
 t/FabForce-DBDesigner4.t
 lib/FabForce/DBDesigner4.pm
+lib/FabForce/DBDesigner4/XML.pm
+lib/FabForce/DBDesigner4/SQL.pm
+lib/FabForce/DBDesigner4/Table.pm
 META.yml                                 Module meta-data (added by MakeMaker)

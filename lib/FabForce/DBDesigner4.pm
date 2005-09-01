@@ -13,7 +13,7 @@ our @ISA         = qw(Exporter);
 our %EXPORT_TAGS = ();
 our @EXPORT_OK   = ();
 our @EXPORT      = qw();
-our $VERSION     = '0.01';
+our $VERSION     = '0.02';
 
 sub new{
   my ($class,%args) = @_;
@@ -73,7 +73,7 @@ __END__
 
 =head1 NAME
 
-Parse/Analyse XML-Files created by DBDesigner 4 (FabForce)
+FabForce::DBDesigner4 - Parse/Analyse XML-Files created by DBDesigner 4 (FabForce)
 
 =head1 SYNOPSIS
 
@@ -152,6 +152,16 @@ Methods of the table-objects
   # get the columns
   print $_,"\n" for($table->columns());
   
+=head2 columnType
+
+  # get datatype of n-th column (i.e. 3rd column)
+  my $datatype = $table->columnType(3);
+  
+=head2 columnInfo
+
+  # get info about n-th column (i.e. 4th column)
+  print Dumper($table->columnInfo(4);
+  
 =head2 stringsToTableCols
 
   # maps column information to hash (needed for columns())
@@ -175,6 +185,11 @@ Methods of the table-objects
 =head2 addRelation
 
   $table->addRelation([1,'startTable.startCol','targetTable.targetCol']);
+  
+=head2 removeRelation
+
+  # removes a relation (i.e. 2nd relation)
+  $table->removeRelation(2);
 
 =head2 key
 
