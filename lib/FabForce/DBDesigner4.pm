@@ -13,7 +13,7 @@ our @ISA         = qw(Exporter);
 our %EXPORT_TAGS = ();
 our @EXPORT_OK   = ();
 our @EXPORT      = qw();
-our $VERSION     = '0.02';
+our $VERSION     = '0.03';
 
 sub new{
   my ($class,%args) = @_;
@@ -63,7 +63,7 @@ sub writeSQL{
 
 sub getTables{
   my ($self) = @_;
-  return $self->{structure};
+  return @{$self->{structure}};
 }# getTables
 
 1;
@@ -160,7 +160,7 @@ Methods of the table-objects
 =head2 columnInfo
 
   # get info about n-th column (i.e. 4th column)
-  print Dumper($table->columnInfo(4);
+  print Dumper($table->columnInfo(4));
   
 =head2 stringsToTableCols
 

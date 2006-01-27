@@ -3,4 +3,8 @@ Revision history for Perl extension FabForce::DBDesigner4.
 0.01  Mon Aug  8 14:47:10 2005
 	- original version; created by h2xs 1.23 with options
 		-XA -b 5.6.1 -n FabForce::DBDesigner4
+        
+0.03  Fri Jan 27 04:36:22 2006
+    - fixed one minor bug
+    - typo in documentation
 

@@ -5,8 +5,8 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test;
-BEGIN { plan tests => 1 };
+use Test::More tests => 5;
+use FindBin qw();
 use FabForce::DBDesigner4;
 ok(1); # If we made it this far, we're ok.
 
@@ -15,3 +15,15 @@ ok(1); # If we made it this far, we're ok.
 # Insert your test code below, the Test::More module is use()ed here so read
 # its man page ( perldoc Test::More ) for help writing this test script.
 
+  my $designer = FabForce::DBDesigner4->new();
+  ok(ref $designer eq 'FabForce::DBDesigner4');
+  
+  my $file = $FindBin::Bin .'/test.xml';
+  $designer->parsefile(xml => $file);
+  
+  my @tables = $designer->getTables();
+  ok(scalar(@tables) == 1);
+  ok($tables[0]->name() eq 'Testtable');
+  
+  my $col = ($tables[0]->columns())[0];
+  ok($col eq 'column1 INTEGER NOT NULL AUTOINCREMENT');
