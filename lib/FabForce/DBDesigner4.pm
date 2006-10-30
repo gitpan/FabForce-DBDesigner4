@@ -13,7 +13,7 @@ our @ISA         = qw(Exporter);
 our %EXPORT_TAGS = ();
 our @EXPORT_OK   = ();
 our @EXPORT      = qw();
-our $VERSION     = '0.03';
+our $VERSION     = '0.04';
 
 sub new{
   my ($class,%args) = @_;
@@ -65,6 +65,13 @@ sub getTables{
   my ($self) = @_;
   return @{$self->{structure}};
 }# getTables
+
+sub getSQL{
+    my ($self)  = @_;
+    my $sql     = FabForce::DBDesigner4::SQL->new();
+    my @creates = $sql->getSQL($self->{structure});
+    return @creates;
+}
 
 1;
 
@@ -128,7 +135,13 @@ print the structure into a sql-file
 returns an array of table-objects
 
   my @tables = $designer->getTables();
-  
+
+=head2 getSQL
+
+returns an array of CREATE statements. One element for each table.
+
+  my @creates = $designer->getSQL();
+
 =head1 DBDesigner4::Table
 
 Each table is an object which contains information about the columns,

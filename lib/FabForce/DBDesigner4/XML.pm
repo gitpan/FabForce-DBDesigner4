@@ -572,3 +572,13 @@ sub _constants{
 }# _constants
 
 1;
+__END__
+=pod
+
+=head1 METHODS
+
+=head2 new
+
+=head2 writeXML
+
+=head2 parsefile

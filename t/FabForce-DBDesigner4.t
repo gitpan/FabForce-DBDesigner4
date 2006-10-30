@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 5;
+use Test::More tests => 6;
 use FindBin qw();
 use FabForce::DBDesigner4;
 ok(1); # If we made it this far, we're ok.
@@ -27,3 +27,13 @@ ok(1); # If we made it this far, we're ok.
   
   my $col = ($tables[0]->columns())[0];
   ok($col eq 'column1 INTEGER NOT NULL AUTOINCREMENT');
+  
+  my @creates = (qq~CREATE TABLE Testtable(
+  column1 INTEGER NOT NULL AUTOINCREMENT,
+  col2 VARCHAR ,
+  PRIMARY KEY(column1),
+  );
+
+~);
+  
+  is_deeply(\@creates,[$designer->getSQL()],'check getSQL()');

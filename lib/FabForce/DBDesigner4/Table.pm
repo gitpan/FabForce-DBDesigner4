@@ -191,3 +191,84 @@ sub _checkArg{
 }# checkArg
 
 1;
+__END__
+
+=head1 DBDesigner4::Table
+
+Each table is an object which contains information about the columns,
+the relations and the keys.
+
+Methods of the table-objects
+
+=head2 name
+
+  # set the tablename
+  $table->name('tablename');
+  # get the tablename
+  my $name = $table->name();
+  
+=head2 columns
+
+  # set the tablecolumns
+  my @array = ({'column1' => ['int','not null']});
+  $table->columns(\@array);
+  
+  # get the columns
+  print $_,"\n" for($table->columns());
+  
+=head2 columnType
+
+  # get datatype of n-th column (i.e. 3rd column)
+  my $datatype = $table->columnType(3);
+  
+=head2 columnInfo
+
+  # get info about n-th column (i.e. 4th column)
+  print Dumper($table->columnInfo(4));
+  
+=head2 stringsToTableCols
+
+  # maps column information to hash (needed for columns())
+  my @columns = ('col1 varchar(255) primary key', 'col2 int not null');
+  my @array   = $table->stringsToTableCols(@columns);
+
+=head2 addColumn
+
+  # add the tablecolumn
+  my $column = ['column1','int','not null'];
+  $table->addColumn($column);
+
+=head2 relations
+
+  # set relations
+  my @relations = ([1,'startTable.startCol','targetTable.targetCol']);
+  $table->relations(\@relations);
+  # get relations
+  print $_,"\n" for($table->relations());
+
+=head2 addRelation
+
+  $table->addRelation([1,'startTable.startCol','targetTable.targetCol']);
+
+=head2 removeRelation
+
+  # removes a relation (i.e. 2nd relation)
+  $table->removeRelation(2);
+
+=head2 key
+
+  # set the primary key
+  $table->key(['prim1']);
+  # get the primary key
+  print "the primary key contains these columns:\n";
+  print $_,"\n" for($table->key());
+
+=head2 attribute
+
+=head2 changeRelation
+
+=head2 coords
+
+=head2 new
+
+=head2 tableIndex

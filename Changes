@@ -8,3 +8,9 @@ Revision history for Perl extension FabForce::DBDesigner4.
     - fixed one minor bug
     - typo in documentation
 
+0.04  Mon Oct 30 17:48:23 2006
+    DBDesigner4.pm: 
+      + getSQL() added: get the CREATE statements
+    SQL.pm:
+      + getSQL() added: get the CREATE statements
+    

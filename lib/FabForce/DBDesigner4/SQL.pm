@@ -12,7 +12,7 @@ our @ISA         = qw(Exporter);
 our %EXPORT_TAGS = ();
 our @EXPORT_OK   = ();
 our @EXPORT      = qw();
-our $VERSION     = '0.01';
+our $VERSION     = '0.02';
 our $ERROR       = 0;
 
 sub new{
@@ -65,6 +65,28 @@ sub writeSQL{
   }
   $fh->close() if(ref($fh) ne 'GLOB');
 }# writeSQL
+
+sub getSQL{
+    my ($self,$structure) = @_;
+    return unless ref($structure) eq 'ARRAY';
+    
+    my @statements = ();
+    
+    for my $table(@$structure){
+        my @columns   = $table->columns();
+        my $tablename = $table->name();
+        my @relations = grep{$_->[1] =~ /^$tablename\./}$table->relations();
+           @relations = getForeignKeys(@relations);
+        my $stmt = "CREATE TABLE ".$tablename."(\n  ".join(",\n  ",@columns).",\n  ";
+        $stmt   .= "PRIMARY KEY(".join(",",$table->key())."),\n  " if(scalar($table->key()) > 0);
+        $stmt   .= join(",\n  ",@relations).",\n  " if(scalar(@relations) > 0);
+        $stmt   .= ");\n\n";
+    
+        push @statements,$stmt;
+    }
+    
+    return @statements;
+}
 
 sub createStructure{
   my (@tables) = @_;
@@ -182,3 +204,23 @@ sub getForeignKeys{
 }# getForeignKeys
 
 1;
+
+__END__
+
+=head1 METHODS
+
+=head2 new
+
+=head2 parsefile
+
+=head2 getForeignKeys
+
+=head2 getTableForeignKeys
+
+=head2 getTablePrimaryKeys
+
+=head2 getSQL
+
+=head2 writeSQL
+
+=head2 createStructure

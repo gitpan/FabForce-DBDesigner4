@@ -3,6 +3,10 @@ Makefile.PL
 MANIFEST
 README
 t/FabForce-DBDesigner4.t
+t/test_pod_coverage.t
+t/test_pod.t
+t/test_manifest.t
+t/test.xml
 lib/FabForce/DBDesigner4.pm
 lib/FabForce/DBDesigner4/XML.pm
 lib/FabForce/DBDesigner4/SQL.pm
