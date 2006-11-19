@@ -11,5 +11,9 @@ SKIP:{
     
     my $pod_dir = $FindBin::Bin . "/../lib";
     my @poddirs = ($pod_dir);
-    all_pod_files_ok(all_pod_files(@poddirs));
+    my @files = all_pod_files(@poddirs);
+    
+    diag "\n\n$Test::More::VERSION\n\n";
+    
+    all_pod_files_ok(@files);
 }

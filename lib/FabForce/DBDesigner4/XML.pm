@@ -8,12 +8,8 @@ use XML::Writer;
 use IO::File;
 use FabForce::DBDesigner4::Table;
 
-require Exporter;
+use Data::Dumper;
 
-our @ISA         = qw(Exporter);
-our %EXPORT_TAGS = ();
-our @EXPORT_OK   = ();
-our @EXPORT      = qw();
 our $VERSION     = '0.01';
 our @TABLES      = ();
 our %COLUMNS     = ();
@@ -171,13 +167,16 @@ sub _printTables{
         $value = $table->name();
       }
       elsif($att eq 'XPos'){
-        $value = ($table->coords())[0];
+        $value = ($table->coords())[0] || $ID * 20;
       }
       elsif($att eq 'YPos'){
-        $value = ($table->coords())[1];
+        $value = ($table->coords())[1] || $ID * 30;
       }
       elsif($att eq 'TableType'){
         $value = 'MyISAM';
+      }
+      elsif($att eq 'PrevTableName'){
+          $value = 'Table_'.sprintf("%02d",$ID);
       }
       $attributes .= ' '.$att.'="'.$value.'"';
     }
@@ -282,6 +281,7 @@ sub _printRelations{
 
 sub _datatypes{
   my ($type,$key) = @_;
+  $key = uc($key);
   my %name2id = (
                  'TINYINT'            =>  1,
                  'SMALLINT'           =>  2,
@@ -316,7 +316,7 @@ sub _datatypes{
                  'SET'                => 32,
                  'Varchar(20)'        => 33,
                  'Varchar(45)'        => 34,
-                 'Varvchar(255)'      => 35,
+                 'Varchar(255)'       => 35,
                  'GEOMETRY'           => 36,
                  'LINESTRING'         => 38,
                  'POLYGON'            => 39,
@@ -326,7 +326,11 @@ sub _datatypes{
                  'GEOMETRYCOLLECTION' => 43,
                 );
   my %id2name;
-  $id2name{$name2id{$_}} = $_ for(keys(%name2id));
+  for(keys(%name2id)){
+      $id2name{$name2id{$_}} = uc($_);
+      $name2id{uc($_)}       = $name2id{$_};
+      $name2id{lc($_)}       = $name2id{$_};
+  }
   
   my $value;
   if($type eq 'name2id' && exists($name2id{$key})){
@@ -335,6 +339,12 @@ sub _datatypes{
   elsif($type eq 'id2name' && exists($id2name{$key})){
     $value = $id2name{$key};
   }
+  else{
+      print ">>$key<<\n\n";
+      print Dumper(\%name2id);
+      $value = 35;
+  }
+  
   return $value;
 }# _datatypes
 

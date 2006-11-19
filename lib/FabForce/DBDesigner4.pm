@@ -1,6 +1,5 @@
 package FabForce::DBDesigner4;
 
-use 5.006001;
 use strict;
 use warnings;
 use Carp;
@@ -13,7 +12,7 @@ our @ISA         = qw(Exporter);
 our %EXPORT_TAGS = ();
 our @EXPORT_OK   = ();
 our @EXPORT      = qw();
-our $VERSION     = '0.04';
+our $VERSION     = '0.05';
 
 sub new{
   my ($class,%args) = @_;

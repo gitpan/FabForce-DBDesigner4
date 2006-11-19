@@ -6,12 +6,6 @@ use warnings;
 use Carp;
 use FabForce::DBDesigner4::Table;
 
-require Exporter;
-
-our @ISA         = qw(Exporter);
-our %EXPORT_TAGS = ();
-our @EXPORT_OK   = ();
-our @EXPORT      = qw();
 our $VERSION     = '0.02';
 our $ERROR       = 0;
 
