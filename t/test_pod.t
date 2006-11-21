@@ -5,15 +5,10 @@ use warnings;
 use FindBin ();
 use Test::More;
 
-SKIP:{
-    eval "use Test::Pod 1.00";
-    skip "Test::Pod 1.00 required",1 if $@;
-    
-    my $pod_dir = $FindBin::Bin . "/../lib";
-    my @poddirs = ($pod_dir);
-    my @files = all_pod_files(@poddirs);
-    
-    diag "\n\n$Test::More::VERSION\n\n";
-    
-    all_pod_files_ok(@files);
-}
+eval "use Test::Pod 1.00";
+plan skip_all => "Test::Pod 1.00 required" if $@;
+my @files = all_pod_files($FindBin::Bin . "/../lib");
+
+plan tests => scalar @files;
+
+pod_file_ok($_) for @files;

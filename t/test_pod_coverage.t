@@ -4,10 +4,10 @@ use strict;
 use warnings;
 use Test::More;
 
-SKIP:{
-    eval "use Test::Pod::Coverage";
-    skip "Test::Pod::Coverage required",1 if $@;
+eval "use Test::Pod::Coverage";
+plan skip_all => "Test::Pod::Coverage required" if $@;
 
-    my @mods = all_modules();
-    all_pod_coverage_ok(@mods);
-}
+my @mods = all_modules();
+plan tests => scalar @mods;
+
+pod_coverage_ok($_) for @mods;
