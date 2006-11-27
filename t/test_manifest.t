@@ -2,12 +2,8 @@
 
 use strict;
 use warnings;
-use FindBin ();
-use Test::More tests => 1;
+use Test::More;
 
-SKIP:{
-    eval "use Test::CheckManifest 0.4";
-    skip "Test::CheckManifest 0.4 required",1 if $@;
-    
-    ok_manifest();
-}
+eval "use Test::CheckManifest 0.9";
+plan skip_all => "Test::CheckManifest 0.9 required" if $@;    
+ok_manifest();
