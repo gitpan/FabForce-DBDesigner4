@@ -17,3 +17,11 @@ Revision history for Perl extension FabForce::DBDesigner4.
 0.06  Tue Nov 21 22:10:24 2006
     Tests improved
     
+0.08  Tue Jul 10 15:36:22 2007
+    SQL.pm:   
+      + code cleanup
+    Table.pm: 
+      + some workarounds for missing details in xml information
+      + column_names()
+      + code cleanup
+      + get_foreign_keys()

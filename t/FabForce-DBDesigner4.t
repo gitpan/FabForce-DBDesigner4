@@ -30,7 +30,7 @@ ok(1); # If we made it this far, we're ok.
   
   my @creates = (qq~CREATE TABLE Testtable(
   column1 INTEGER NOT NULL AUTOINCREMENT,
-  col2 VARCHAR ,
+  col2 VARCHAR(255) ,
   PRIMARY KEY(column1),
   );
 

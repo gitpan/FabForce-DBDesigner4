@@ -6,7 +6,7 @@ use warnings;
 use Carp;
 use FabForce::DBDesigner4::Table;
 
-our $VERSION     = '0.02';
+our $VERSION     = '0.03';
 our $ERROR       = 0;
 
 sub new{
@@ -45,18 +45,8 @@ sub writeSQL{
   unless(ref($fh) =~ /IO::File/){
     $fh = \*STDOUT;
   }
-  for my $table(@$structure){
-    my @columns   = $table->columns();
-    my $tablename = $table->name();
-    my @relations = grep{$_->[1] =~ /^$tablename\./}$table->relations();
-       @relations = getForeignKeys(@relations);
-    print $fh "CREATE TABLE ",$tablename,"(\n  ",
-              join(",\n  ",@columns),",\n  ";
-    print $fh "PRIMARY KEY(",join(",",$table->key()),"),\n  " if(scalar($table->key()) > 0);
-    print $fh join(",\n  ",@relations),",\n  " if(scalar(@relations) > 0);
-    #print $fh "PRIMARY KEY(",join(",",$table->key()),"),\n  " if(scalar($table->key()) > 0);
-    print $fh ");\n\n";
-  }
+  print $fh $self->getSQL($structure);
+
   $fh->close() if(ref($fh) ne 'GLOB');
 }# writeSQL
 

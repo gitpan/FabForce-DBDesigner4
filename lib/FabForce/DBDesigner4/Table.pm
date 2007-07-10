@@ -3,12 +3,7 @@ package FabForce::DBDesigner4::Table;
 use strict;
 use warnings;
 
-require Exporter;
-our @ISA         = qw(Exporter);;
-our @EXPORT      = ();
-our @EXPORT_OK   = ();
-our %EXPORT_TAGS = ();
-our $VERSION     = '0.01';
+our $VERSION     = '0.02';
 
 sub new{
   my ($class,%args) = @_;
@@ -42,7 +37,11 @@ sub columns{
       my $string = join('',keys(%$col));
       for my $val(values(%$col)){
         for my $elem(@$val){
-          $string .= " ".$elem if(defined $elem);
+            if( defined $elem ){
+                $elem = 'VARCHAR(255)'              if $elem =~ /^varchar$/i;
+                $elem = "ENUM('1','0') DEFAULT '0'" if $elem =~ /^enum$/i;
+                $string .= " ".$elem;
+            }
         }
       }
       push(@columns,$string);
@@ -52,6 +51,17 @@ sub columns{
   $self->{COLUMNS} = $ar;
   return 1;
 }# columns
+
+sub column_names{
+    my ($self) = @_;
+    my @names;
+    
+    for my $col ( @{ $self->{COLUMNS} } ){
+        push @names, join '', keys %$col;
+    }
+
+    return @names;
+}
 
 sub columnType{
   my ($self,$name) = @_;
@@ -155,6 +165,17 @@ sub attribute{
   return 1;
 }# attribute
 
+sub get_foreign_keys{
+    my ($table) = @_;
+    
+    unless( defined $table->{_foreign_relations} ){
+        my $tablename = $table->name();
+        my @relations = grep{$_->[1] =~ /^$tablename\./}$table->relations();
+        $table->{_foreign_relations} = { _getForeignKeys(@relations) };
+    }
+    return $table->{_foreign_relations};
+}
+
 sub _checkArg{
   my ($type,$value) = @_;
   my $return = 0;
@@ -189,6 +210,20 @@ sub _checkArg{
   
   return $return;
 }# checkArg
+
+
+
+sub _getForeignKeys{
+  my @rels = @_;
+  my %relations;
+  for my $rel(@rels){
+    next unless $rel;
+    my $start           = (split(/\./,$rel->[1]))[1];
+    my ($table,$target) =  split(/\./,$rel->[2]);
+    push(@{$relations{$table}},[$start,$target]);
+  }
+  return %relations;
+}# getForeignKeys
 
 1;
 __END__
@@ -272,3 +307,14 @@ Methods of the table-objects
 =head2 new
 
 =head2 tableIndex
+
+=head2 column_names
+
+  my @names = $table->column_names
+  print $_,"\n" for @names;
+
+=head2 get_foreign_keys
+
+  my %foreign_keys = $table->get_foreign_keys;
+  use Data::Dumper;
+  print Dumper \%foreign_keys;
