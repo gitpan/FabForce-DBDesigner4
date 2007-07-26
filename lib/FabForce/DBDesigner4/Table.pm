@@ -3,7 +3,7 @@ package FabForce::DBDesigner4::Table;
 use strict;
 use warnings;
 
-our $VERSION     = '0.02';
+our $VERSION     = '0.03';
 
 sub new{
   my ($class,%args) = @_;
@@ -65,7 +65,7 @@ sub column_names{
 
 sub columnType{
   my ($self,$name) = @_;
-  return undef unless($name);
+  return unless($name);
   my $type = '';
   for(0..scalar(@{$self->{COLUMNS}})-1){
     my ($key) = keys(%{$self->{COLUMNS}->[$_]});
@@ -84,7 +84,7 @@ sub columnInfo{
 
 sub addColumn{
   my ($self,$ar) = @_;
-  return undef unless($ar && ref($ar) eq 'ARRAY');
+  return unless($ar && ref($ar) eq 'ARRAY');
   push(@{$self->{COLUMNS}},{$ar->[0] => [@{$ar}[1,2]]});
   return 1;
 }# addColumn
@@ -127,20 +127,20 @@ sub relations{
 
 sub addRelation{
   my ($self,$value) = @_;
-  return undef unless($value && ref($value) eq 'ARRAY' && scalar(@$value) == 3);
+  return unless($value && ref($value) eq 'ARRAY' && scalar(@$value) == 3);
   push(@{$self->{RELATIONS}},$value);
   return 1;
 }# addRelation
 
 sub removeRelation{
   my ($self,$index) = @_;
-  return undef unless(defined $index or $index > (scalar(@{$self->{RELATIONS}})-1));
+  return unless(defined $index or $index > (scalar(@{$self->{RELATIONS}})-1));
   splice(@{$self->{RELATIONS}},$index,1);
 }# removeRelation
 
 sub changeRelation{
   my ($self,$index,$value) = @_;
-  return undef unless(defined $index and defined $value);
+  return unless(defined $index and defined $value);
   $self->{RELATIONS}->[$index]->[0] = $value;
 }# changeRelation
 

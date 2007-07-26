@@ -25,3 +25,12 @@ Revision history for Perl extension FabForce::DBDesigner4.
       + column_names()
       + code cleanup
       + get_foreign_keys()
+
+0.09 Wed Jul 25 11:30:31 2007
+    + added test: 98_perl_critic.t
+    + changed: adopted some Perl::Critic metrics
+    Table.pm:
+      - bugfix: unique column names in column_names
+    XML.pm:
+      + major code cleanup: removed all the nasty global vars
+      - removed use of Data::Dumper

@@ -18,10 +18,10 @@ sub new{
 
 sub parsefile{
   my ($self,$filename) = @_;
-  return undef unless($filename && -e $filename);
+  return unless($filename && -e $filename);
   my @creates;
   my $statement = '';
-  open(my $fh,"<$filename") or croak "Could not open $filename";
+  open(my $fh,"<",$filename) or croak "Could not open $filename";
   while(<$fh>){
     if(/create/i../;/){
       $statement .= $_;
@@ -40,7 +40,7 @@ sub parsefile{
 
 sub writeSQL{
   my ($self,$structure,$file) = @_;
-  return undef unless(ref($structure) eq 'ARRAY');
+  return unless(ref($structure) eq 'ARRAY');
   my $fh = (defined $file) ? IO::File->new(">$file") : \*STDOUT;
   unless(ref($fh) =~ /IO::File/){
     $fh = \*STDOUT;

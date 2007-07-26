@@ -8,349 +8,434 @@ use XML::Writer;
 use IO::File;
 use FabForce::DBDesigner4::Table;
 
-use Data::Dumper;
-
-our $VERSION     = '0.01';
-our @TABLES      = ();
-our %COLUMNS     = ();
-our %KEYS        = ();
-our %TABLEIDS    = ();
-our %RELATIONS   = ();
-our %RELATIONSID = ();
-our $ISFABFORCE  = 0;
-our $ID          = 0;
-
-our $i = 0;
+our $VERSION     = '0.02';
 
 sub new{
-  my ($class) = @_;
-  my $self = {};
-  bless $self,$class;
-  return $self;
+    my ($class) = @_;
+    my $self = {};
+    bless $self,$class;
+    
+    $self->_reset_tables;
+    $self->_is_fabforce( 0 );
+    $self->_id( 0 );
+    $self->_reset_columns;
+    $self->_reset_tableids;
+    $self->_reset_relationsid;
+    
+    return $self;
 }# new
 
 sub writeXML{
-  my ($self,$structref,$file) = @_;
-  return undef unless(ref($structref) eq 'ARRAY');
-  %TABLEIDS    = ();
-  $ID          = 0;
-  %RELATIONSID = ();
-  my $fh = (defined $file) ? IO::File->new(">$file") : \*STDOUT;
-  my $xml = XML::Writer->new(OUTPUT => $fh, UNSAFE => 1, NEWLINE => 1);
-  $xml->xmlDecl('ISO-8859-1','yes');
-  $xml->startTag("DBMODEL",version => "4.0");
-  # general settings for DBDesigner
-  $xml->startTag("SETTINGS");
-  $xml->raw(_constants('DATATYPEGROUPS'));
-  $xml->raw(_constants('DATATYPES'));
-  $xml->raw(_constants('REGIONCOLORS'));
-  $xml->endTag("SETTINGS");
-  # metadata
-  $xml->startTag("METADATA");
-  $xml->startTag("TABLES");
-  $xml->raw(_printTables($structref));
-  $xml->endTag("TABLES");
-  $xml->startTag("RELATIONS");
-  $xml->raw(_printRelations($structref));
-  $xml->endTag("RELATIONS");
-  $xml->endTag("METADATA");
-  # plugindata
-  $xml->startTag("PLUGINDATA");
-  $xml->endTag("PLUGINDATA");
-  # querydata
-  $xml->startTag("QUERYDATA");
-  $xml->endTag("QUERYDATA");
-  # linked models
-  $xml->startTag("LINKEDMODELS");
-  $xml->endTag("LINKEDMODELS");
-  $xml->endTag("DBMODEL");
-  $xml->end();
-  $fh->close() if(ref($fh) ne 'GLOB');
+    my ($self,$structref,$file) = @_;
+    return unless(ref($structref) eq 'ARRAY');
+    
+    $self->_reset_tableids;
+    $self->_id( 0 );
+    $self->_reset_relationsid;
+    
+    my $fh = (defined $file) ? IO::File->new(">$file") : \*STDOUT;
+    my $xml = XML::Writer->new(OUTPUT => $fh, UNSAFE => 1, NEWLINE => 1);
+    $xml->xmlDecl('ISO-8859-1','yes');
+    $xml->startTag("DBMODEL",version => "4.0");
+    # general settings for DBDesigner
+    $xml->startTag("SETTINGS");
+    $xml->raw(_constants('DATATYPEGROUPS'));
+    $xml->raw(_constants('DATATYPES'));
+    $xml->raw(_constants('REGIONCOLORS'));
+    $xml->endTag("SETTINGS");
+    # metadata
+    $xml->startTag("METADATA");
+    $xml->startTag("TABLES");
+    $xml->raw(_printTables($self,$structref));
+    $xml->endTag("TABLES");
+    $xml->startTag("RELATIONS");
+    $xml->raw(_printRelations($self,$structref));
+    $xml->endTag("RELATIONS");
+    $xml->endTag("METADATA");
+    # plugindata
+    $xml->startTag("PLUGINDATA");
+    $xml->endTag("PLUGINDATA");
+    # querydata
+    $xml->startTag("QUERYDATA");
+    $xml->endTag("QUERYDATA");
+    # linked models
+    $xml->startTag("LINKEDMODELS");
+    $xml->endTag("LINKEDMODELS");
+    $xml->endTag("DBMODEL");
+    $xml->end();
+    $fh->close() if(ref($fh) ne 'GLOB');
 }# writeXML
 
 sub parsefile{
-  my ($self,$filename) = @_;
-  return undef unless $filename;
-  @TABLES     = ();
-  $ISFABFORCE = 0;
-  my $parser  = XML::Twig->new(twig_handlers => { 
-                                                  'TABLE'       => sub{_tables(@_)},
-                                                  'COLUMN'      => sub{_column(@_)},
-                                                  'RELATION'    => sub{_relation(@_)},
-                                                  'INDEXCOLUMN' => sub{_index(@_)},
-                                                  'DBMODEL'     => sub{$ISFABFORCE = 1},
-                                                },
-                              );
-  $parser->parsefile($filename);
-  my $root = $parser->root;
-  return undef unless($ISFABFORCE);
-  for my $table(@TABLES){
-    $table->columns($COLUMNS{$table->name()});
-    $table->key($KEYS{$table->name()});
-  }
-  return [@TABLES];
+    my ($self,$filename) = @_;
+    return unless $filename;
+    $self->_reset_tables;
+    $self->_is_fabforce( 0 );
+    my $parser  = XML::Twig->new(twig_handlers => { 
+        'TABLE'       => sub{_tables($self,@_)},
+        'COLUMN'      => sub{_column($self,@_)},
+        'RELATION'    => sub{_relation($self,@_)},
+        'INDEXCOLUMN' => sub{_index($self,@_)},
+        'DBMODEL'     => sub{$self->_is_fabforce(1)},
+    });
+    $parser->parsefile($filename);
+    my $root = $parser->root;
+    return unless($self->_is_fabforce);
+    
+    for my $table( $self->_all_tables ){
+        $table->columns( $self->_table_columns( $table->name ) );
+        $table->key( $self->_key( $table->name ) );
+    }
+
+    return [ $self->_all_tables ];
 }# parsefile
 
 sub _tables{
-  my ($t,$table) = @_;
-  my $name = $table->{att}->{Tablename};
-  my $xPos = $table->{att}->{XPos};
-  my $yPos = $table->{att}->{YPos};
-  my $tableobj = FabForce::DBDesigner4::Table->new();
-  $tableobj->name($name);
-  $tableobj->coords([$xPos,$yPos,0,0]);
-  push(@TABLES,$tableobj);
-  $TABLEIDS{$table->{att}->{ID}} = $name;
+    my ($self,$t,$table) = @_;
+    
+    my $name = $table->{att}->{Tablename};
+    my $xPos = $table->{att}->{XPos};
+    my $yPos = $table->{att}->{YPos};
+    
+    my $tableobj = FabForce::DBDesigner4::Table->new();
+    $tableobj->name($name);
+    $tableobj->coords([$xPos,$yPos,0,0]);
+    
+    $self->_add_table( $tableobj );
+    $self->_tableid( $table->{att}->{ID}, $name );
 }# _tables
 
 sub _column{
-  my ($t,$col) = @_;
-  my $parent_table   = $col->{parent}->{parent}->{att}->{Tablename};
-  my $name           = $col->{att}->{ColName};
-  my $datatype       = _datatypes('id2name',$col->{att}->{idDatatype});
-  my $notnull        = $col->{att}->{NotNull} ? 'NOT NULL' : '';
-  my $default        = $col->{att}->{DefaultValue} || '';
-  my $autoinc        = $col->{att}->{AutoInc} ? 'AUTOINCREMENT' : '';
-  my $info           = '';
-  $info .= $notnull.' '              if($notnull);
-  $info .= "DEFAULT '".$default."' " if($default);
-  $info .= $autoinc                  if($autoinc);
-  push(@{$COLUMNS{$parent_table}},{$name => [$datatype,$info]});
-  push(@{$KEYS{$parent_table}},$name) if($col->{att}->{PrimaryKey});
+    my ($self,$t,$col) = @_;
+    
+    my $parent_table   = $col->{parent}->{parent}->{att}->{Tablename};
+    my $name           = $col->{att}->{ColName};
+    my $datatype       = _datatypes('id2name',$col->{att}->{idDatatype});
+    my $notnull        = $col->{att}->{NotNull} ? 'NOT NULL' : '';
+    my $default        = $col->{att}->{DefaultValue} || '';
+    my $autoinc        = $col->{att}->{AutoInc} ? 'AUTOINCREMENT' : '';
+    
+    my $info           = '';
+    $info .= $notnull.' '              if($notnull);
+    $info .= "DEFAULT '".$default."' " if($default);
+    $info .= $autoinc                  if($autoinc);
+    
+    $self->_add_columns( $parent_table, {$name => [$datatype,$info]} );
+    $self->_key( $parent_table, $name ) if $col->{att}->{PrimaryKey};
 }# _column
 
 sub _relation{
-  my ($t,$rel) = @_;
-  
-  my $src       = $TABLEIDS{$rel->{att}->{SrcTable}};
-  my @relations = split(/\\n/,$rel->{att}->{FKFields});
-  my ($obj)     = grep{$_->name() eq $src}@TABLES;
-  my $f_id      = $TABLEIDS{$rel->{att}->{DestTable}};
-  my ($f_table) = grep{$_->name() eq $f_id}@TABLES;
-  
-  for my $relation(@relations){
-    my ($owncol,$foreign) = split(/=/,$relation,2);
-    $obj->addRelation([1,$f_id.'.'.$foreign,$src.'.'.$owncol]);
-    $f_table->addRelation([1,$f_id.'.'.$foreign,$src.'.'.$owncol]);
-  }
+    my ($self,$t,$rel) = @_;
+    
+    my $src       = $self->_tableid( $rel->{att}->{SrcTable} );
+    my @relations = split(/\\n/,$rel->{att}->{FKFields});
+    my ($obj)     = grep{$_->name() eq $src}$self->_all_tables;
+    my $f_id      = $self->_tableid( $rel->{att}->{DestTable} );
+    my ($f_table) = grep{$_->name() eq $f_id}$self->_all_tables;
+    
+    for my $relation(@relations){
+        my ($owncol,$foreign) = split(/=/,$relation,2);
+        $obj->addRelation([1,$f_id.'.'.$foreign,$src.'.'.$owncol]);
+        $f_table->addRelation([1,$f_id.'.'.$foreign,$src.'.'.$owncol]);
+    }
 }# _relation
 
 sub _index{
+    my ($self) = @_;
 }# _index
 
 sub _printTables{
-  my ($struct) = @_;
-  my %optionselected = (0 => [1,5,6,6,19,20,33,34,35],
-                        1 => [1,2,3,4,5],
-                        );
-  my $string      = '';
-  # table attributes
-  my @att_order = qw(ID Tablename PrevTableName XPos YPos TableType TablePrefix 
-                     nmTable Temporary UseStandardInserts StandardInserts TableOptions 
-                     Comments Collapsed IsLinkedObject IDLinkedModel Obj_id_Linked OrderPos);
+    my ($self,$struct) = @_;
+    my %optionselected = (0 => [1,5,6,6,19,20,33,34,35],
+                          1 => [1,2,3,4,5],
+                          );
+    my $string      = '';
+    # table attributes
+    my @att_order = qw(ID Tablename PrevTableName XPos YPos TableType TablePrefix 
+                       nmTable Temporary UseStandardInserts StandardInserts TableOptions 
+                       Comments Collapsed IsLinkedObject IDLinkedModel Obj_id_Linked OrderPos);
+                         
+    # column attributes
+    my @att_names = qw(ID ColName PrevColName Pos idDatatype DatatypeParams Width
+                       Prec PrimaryKey NotNull AutoInc IsForeignKey DefaultValue Comments);
                        
-  # column attributes
-  my @att_names = qw(ID ColName PrevColName Pos idDatatype DatatypeParams Width
-                     Prec PrimaryKey NotNull AutoInc IsForeignKey DefaultValue Comments);
-                     
-  for my $table(@{$struct}){
-    ++$ID;
-    my $attributes = '';
-    my $tablename  = $table->name();
-    $TABLEIDS{$ID} = $tablename;
-    for my $att(@att_order){
-      my $value = '';
-      if($att eq 'ID'){
-        $value = $ID;
-      }
-      elsif($att eq 'Tablename'){
-        $value = $table->name();
-      }
-      elsif($att eq 'XPos'){
-        $value = ($table->coords())[0] || $ID * 20;
-      }
-      elsif($att eq 'YPos'){
-        $value = ($table->coords())[1] || $ID * 30;
-      }
-      elsif($att eq 'TableType'){
-        $value = 'MyISAM';
-      }
-      elsif($att eq 'PrevTableName'){
-          $value = 'Table_'.sprintf("%02d",$ID);
-      }
-      $attributes .= ' '.$att.'="'.$value.'"';
-    }
-    $string .= '<TABLE'.$attributes.">\n";
-    $string .= "<COLUMNS>\n";
-    my $col_position = 0;
-    for my $col($table->columns()){
-      ++$ID;
-      my $col_att     = '';
-      my $columnname  = '';
-      my $datatype_id = 0;
-      for(@att_names){
-        my $value = '1';
-        if($_ eq 'IsForeignKey'){
+    for my $table(@{$struct}){
+        my $id = $self->_id;
+        $self->_id( $id+1 );
+        my $attributes = '';
+        my $tablename  = $table->name();
+        $self->_tableid( $self->_id, $tablename );
+        for my $att(@att_order){
+            my $value = '';
+            if($att eq 'ID'){
+              $value = $self->_id;
+            }
+            elsif($att eq 'Tablename'){
+              $value = $table->name();
+            }
+            elsif($att eq 'XPos'){
+              $value = ($table->coords())[0] || $self->_id * 20;
+            }
+            elsif($att eq 'YPos'){
+              $value = ($table->coords())[1] || $self->_id * 30;
+            }
+            elsif($att eq 'TableType'){
+              $value = 'MyISAM';
+            }
+            elsif($att eq 'PrevTableName'){
+                $value = 'Table_'.sprintf("%02d",$self->_id);
+            }
+            $attributes .= ' '.$att.'="'.$value.'"';
         }
-        elsif($_ eq 'ID'){
-          $value = $ID;
+        $string .= '<TABLE'.$attributes.">\n";
+        $string .= "<COLUMNS>\n";
+        my $col_position = 0;
+        for my $col($table->columns()){
+            my $id = $self->_id;
+            $self->_id( $id+1 );
+            my $col_att     = '';
+            my $columnname  = '';
+            my $datatype_id = 0;
+            for(@att_names){
+                my $value = '1';
+                if($_ eq 'IsForeignKey'){
+                }
+                elsif($_ eq 'ID'){
+                    $value = $self->_id;
+                }
+                elsif($_ eq 'ColName'){
+                    $value = (split(/\s/,$col,2))[0];
+                    $columnname = $value;
+                }
+                elsif($_ eq 'idDatatype'){
+                    my $dt = (split(/\s+/,$col,3))[1];
+                    $datatype_id = _datatypes('name2id',uc($dt));
+                }
+                elsif($_ eq 'PrimaryKey'){
+                    $value = grep{$_ eq $columnname}$table->key() ? 1 : 0;
+                }
+                elsif($_ eq 'NotNull'){
+                    $value = $col =~ /not\s+null/i ? 1 : 0;
+                }
+                elsif($_ eq 'AutoInc'){
+                    $value = $col =~ /autoincrement/i ? 1 : 0;
+                }
+                elsif($_ eq 'DefaultValue'){
+                    ($value) = $col =~ /default\s+([^\s]+)/i;
+                    $value ||= '';
+                }
+                $col_att .= " ".$_.'="'.$value.'"';
+            }
+            my $start = '<COLUMN'.$col_att.">\n";
+            $start   .= "  <OPTIONSELECTED>\n";
+            for my $val(0,1){
+                $start   .= '    <OPTIONSELECT Value="'.$val.'" />'."\n" for(grep{$_ == $datatype_id}@{$optionselected{$val}});
+            }
+            $start   .= "  </OPTIONSELECTED>\n";
+            $start   .= "</COLUMN>\n";
+            $string  .= $start;
+        
+            ++$col_position;
         }
-        elsif($_ eq 'ColName'){
-          $value = (split(/\s/,$col,2))[0];
-          $columnname = $value;
-        }
-        elsif($_ eq 'idDatatype'){
-          my $dt = (split(/\s+/,$col,3))[1];
-          $datatype_id = _datatypes('name2id',uc($dt));
-        }
-        elsif($_ eq 'PrimaryKey'){
-          $value = grep{$_ eq $columnname}$table->key() ? 1 : 0;
-        }
-        elsif($_ eq 'NotNull'){
-          $value = $col =~ /not\s+null/i ? 1 : 0;
-        }
-        elsif($_ eq 'AutoInc'){
-          $value = $col =~ /autoincrement/i ? 1 : 0;
-        }
-        elsif($_ eq 'DefaultValue'){
-          ($value) = $col =~ /default\s+([^\s]+)/i;
-          $value ||= '';
-        }
-        $col_att .= " ".$_.'="'.$value.'"';
-      }
-      my $start = '<COLUMN'.$col_att.">\n";
-      $start   .= "  <OPTIONSELECTED>\n";
-      for my $val(0,1){
-        $start   .= '    <OPTIONSELECT Value="'.$val.'" />'."\n" for(grep{$_ == $datatype_id}@{$optionselected{$val}});
-      }
-      $start   .= "  </OPTIONSELECTED>\n";
-      $start   .= "</COLUMN>\n";
-      $string  .= $start;
+        $string .= "</COLUMNS>\n";
       
-      ++$col_position;
+        my @relations_start  = grep{$_->[2] =~ /^$tablename\./}$table->relations();
+        my @relations_end    = grep{$_->[1] =~ /^$tablename\./}$table->relations();
+        my $relations_string = '';
+      
+        if(@relations_start){
+            $relations_string = "<RELATIONS_START>\n";
+            for my $rel_start(@relations_start){
+                my $key = join('',@$rel_start);
+                my $relationid = $self->_id;
+                if( $self->_relationsid( $key ) ){
+                    $relationid = $self->_relationsid( $key );
+                }
+                else{
+                    my $id = $self->_id;
+                    $self->_relationsid( $key, $id );
+                    $self->_id( $id+1 );
+                }
+                $relations_string .= qq~  <RELATION_START ID="$relationid">\n~;
+            }
+            $relations_string .= "</RELATIONS_START>\n";
+        }
+      
+        if(@relations_end){
+            $relations_string .= "<RELATIONS_END>\n";
+            for my $rel_end(@relations_end){
+                my $key = join('',@$rel_end);
+                my $relationid = $self->_id;
+                if( $self->_relationsid( $key ) ){
+                    $relationid = $self->_relationsid( $key );
+                }
+                else{
+                    my $id = $self->_id;
+                    $self->_relationsid( $key, $id );
+                    $self->_id( $id+1 );
+                }
+                $relations_string .= qq~  <RELATION_END ID="$relationid">\n~;
+            }
+            $relations_string .= "</RELATIONS_END>\n";
+            $string .= $relations_string;
+        }
+        $string .= "</TABLE>\n";
     }
-    $string .= "</COLUMNS>\n";
-    
-    my @relations_start  = grep{$_->[2] =~ /^$tablename\./}$table->relations();
-    my @relations_end    = grep{$_->[1] =~ /^$tablename\./}$table->relations();
-    my $relations_string = '';
-    
-    if(@relations_start){
-      $relations_string = "<RELATIONS_START>\n";
-      for my $rel_start(@relations_start){
-        my $key = join('',@$rel_start);
-        my $relationid = $ID;
-        if(exists($RELATIONSID{$key})){
-          $relationid = $RELATIONSID{$key};
-        }
-        else{
-          $RELATIONSID{$key} = $ID;
-          ++$ID;
-        }
-        $relations_string .= qq~  <RELATION_START ID="$relationid">\n~;
-      }
-      $relations_string .= "</RELATIONS_START>\n";
-    }
-    
-    if(@relations_end){
-      $relations_string .= "<RELATIONS_END>\n";
-      for my $rel_end(@relations_end){
-        my $key = join('',@$rel_end);
-        my $relationid = $ID;
-        if(exists($RELATIONSID{$key})){
-          $relationid = $RELATIONSID{$key};
-        }
-        else{
-          $RELATIONSID{$key} = $ID;
-          ++$ID;
-        }
-        $relations_string .= qq~  <RELATION_END ID="$relationid">\n~;
-      }
-      $relations_string .= "</RELATIONS_END>\n";
-      $string .= $relations_string;
-    }
-    $string .= "</TABLE>\n";
-  }
-  return $string
+    return $string
 }# _printTable
 
+sub _id{
+    my ($self,$value) = @_;
+    $self->{_ID_} = $value if defined $value;
+    return $self->{_ID_};
+}
+
+sub _is_fabforce{
+    my ($self,$value) = @_;
+    $self->{_ISFABFORCE_} = $value if defined $value;
+    return $self->{_ISFABFORCE_};
+}
+
+sub _add_table{
+    my ($self,$table) = @_;
+    push @{ $self->{_TABLES_} }, $table;
+}
+
+sub _reset_tables{
+    my ($self) = @_;
+    $self->{_TABLES_} = [];
+}
+
+sub _all_tables{
+    my ($self) = @_;
+    
+    return @{ $self->{_TABLES_} };
+}
+
+sub _reset_columns{
+    my ($self) = @_;
+    $self->{_COLUMNS_} = {};
+}
+
+sub _table_columns{
+    my ($self,$name) = @_;
+    return $self->{_COLUMNS_}->{$name} if exists $self->{_COLUMNS_}->{$name};
+    return;
+}
+
+sub _add_columns{
+    my ($self,$table,$value) = @_;
+    push @{ $self->{_COLUMNS_}->{$table} }, $value if defined $value;
+}
+
+sub _reset_relationsid{
+    my ($self) = @_;
+    $self->{_RELATIONSID_} = {};
+}
+
+sub _relationsid{
+    my ($self,$key,$value) = @_;
+    $self->{_RELATIONSID_}->{$key} = $value if defined $value;
+    return $self->{_RELATIONSID_}->{$key} if exists $self->{_RELATIONSID_}->{$key};
+    return;
+}
+
+sub _reset_tableids{
+    my ($self) = @_;
+    $self->{_TABLEIDS_} = {};
+}
+
+sub _tableid{
+    my ($self,$id,$value) = @_;
+    $self->{_TABLEIDS_}->{$id} = $value if defined $value;
+    return $self->{_TABLEIDS_}->{$id} if exists $self->{_TABLEIDS_}->{$id};
+    return;
+}
+
+sub _key{
+    my ($self,$table,$value) = @_;
+    push @{ $self->{_KEYS_}->{$table} }, $value if defined $value;
+    return $self->{_KEYS_}->{$table} if exists $self->{_KEYS_}->{$table};
+    return;
+}
+
 sub _printRelations{
-  my ($struct) = @_;
-  return " ";
+    my ($self,$struct) = @_;
+    return " ";
 }# _printRelations
 
 sub _datatypes{
-  my ($type,$key) = @_;
-  $key = uc($key);
-  my %name2id = (
-                 'TINYINT'            =>  1,
-                 'SMALLINT'           =>  2,
-                 'MEDIUMINT'          =>  3,
-                 'INT'                =>  4,
-                 'INTEGER'            =>  5,
-                 'BIGINT'             =>  6,
-                 'FLOAT'              =>  7,
-                 'DOUBLE'             =>  9,
-                 'DOUBLE PRECISION'   => 10,
-                 'REAL'               => 11,
-                 'DECIMAL'            => 12,
-                 'NUMERIC'            => 13,
-                 'DATE'               => 14,
-                 'DATETIME'           => 15,
-                 'TIMESTAMP'          => 16,
-                 'TIME'               => 17,
-                 'YEAR'               => 18,
-                 'CHAR'               => 19,
-                 'VARCHAR'            => 20,
-                 'BIT'                => 21,
-                 'BOOL'               => 22,
-                 'TINYBLOB'           => 23,
-                 'BLOB'               => 24,
-                 'MEDIUMBLOB'         => 25,
-                 'LONGBLOB'           => 26,
-                 'TINYTEXT'           => 27,
-                 'TEXT'               => 28,
-                 'MEDIUMTEXT'         => 29,
-                 'LONGTEXT'           => 30,
-                 'ENUM'               => 31,
-                 'SET'                => 32,
-                 'Varchar(20)'        => 33,
-                 'Varchar(45)'        => 34,
-                 'Varchar(255)'       => 35,
-                 'GEOMETRY'           => 36,
-                 'LINESTRING'         => 38,
-                 'POLYGON'            => 39,
-                 'MULTIPOINT'         => 40,
-                 'MULTILINESTRING'    => 41,
-                 'MULTIPOLYGON'       => 42,
-                 'GEOMETRYCOLLECTION' => 43,
-                );
-  my %id2name;
-  for(keys(%name2id)){
-      $id2name{$name2id{$_}} = uc($_);
-      $name2id{uc($_)}       = $name2id{$_};
-      $name2id{lc($_)}       = $name2id{$_};
-  }
-  
-  my $value;
-  if($type eq 'name2id' && exists($name2id{$key})){
-    $value = $name2id{$key};
-  }
-  elsif($type eq 'id2name' && exists($id2name{$key})){
-    $value = $id2name{$key};
-  }
-  else{
-      print ">>$key<<\n\n";
-      print Dumper(\%name2id);
-      $value = 35;
-  }
-  
-  return $value;
+    my ($type,$key) = @_;
+    $key = uc($key);
+    my %name2id = (
+                   'TINYINT'            =>  1,
+                   'SMALLINT'           =>  2,
+                   'MEDIUMINT'          =>  3,
+                   'INT'                =>  4,
+                   'INTEGER'            =>  5,
+                   'BIGINT'             =>  6,
+                   'FLOAT'              =>  7,
+                   'DOUBLE'             =>  9,
+                   'DOUBLE PRECISION'   => 10,
+                   'REAL'               => 11,
+                   'DECIMAL'            => 12,
+                   'NUMERIC'            => 13,
+                   'DATE'               => 14,
+                   'DATETIME'           => 15,
+                   'TIMESTAMP'          => 16,
+                   'TIME'               => 17,
+                   'YEAR'               => 18,
+                   'CHAR'               => 19,
+                   'VARCHAR'            => 20,
+                   'BIT'                => 21,
+                   'BOOL'               => 22,
+                   'TINYBLOB'           => 23,
+                   'BLOB'               => 24,
+                   'MEDIUMBLOB'         => 25,
+                   'LONGBLOB'           => 26,
+                   'TINYTEXT'           => 27,
+                   'TEXT'               => 28,
+                   'MEDIUMTEXT'         => 29,
+                   'LONGTEXT'           => 30,
+                   'ENUM'               => 31,
+                   'SET'                => 32,
+                   'Varchar(20)'        => 33,
+                   'Varchar(45)'        => 34,
+                   'Varchar(255)'       => 35,
+                   'GEOMETRY'           => 36,
+                   'LINESTRING'         => 38,
+                   'POLYGON'            => 39,
+                   'MULTIPOINT'         => 40,
+                   'MULTILINESTRING'    => 41,
+                   'MULTIPOLYGON'       => 42,
+                   'GEOMETRYCOLLECTION' => 43,
+                  );
+    my %id2name;
+    for( keys %name2id ){
+        $id2name{$name2id{$_}} = uc($_);
+        $name2id{uc($_)}       = $name2id{$_};
+        $name2id{lc($_)}       = $name2id{$_};
+    }
+    
+    my $value;
+    if($type eq 'name2id' && exists($name2id{$key})){
+      $value = $name2id{$key};
+    }
+    elsif($type eq 'id2name' && exists($id2name{$key})){
+      $value = $id2name{$key};
+    }
+    else{
+        #print ">>$key<<\n\n";
+        #print Dumper(\%name2id);
+        $value = 35;
+    }
+    
+    return $value;
 }# _datatypes
 
 sub _constants{
-  my ($name) = @_;
-  my %constants = (
+    my ($name) = @_;
+    my %constants = (
     DATATYPEGROUPS => qq~<DATATYPEGROUPS>
 <DATATYPEGROUP Name="Numeric Types" Icon="1" />
 <DATATYPEGROUP Name="Date and Time Types" Icon="2" />

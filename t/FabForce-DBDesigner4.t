@@ -5,9 +5,11 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 6;
+use Test::More tests => 7;
 use FindBin qw();
 use FabForce::DBDesigner4;
+use Data::Dumper;
+
 ok(1); # If we made it this far, we're ok.
 
 #########################
@@ -36,4 +38,10 @@ ok(1); # If we made it this far, we're ok.
 
 ~);
   
-  is_deeply(\@creates,[$designer->getSQL()],'check getSQL()');
+  my $test = Dumper \@creates;
+  my $check = Dumper [$designer->getSQL()];
+  is($test, $check, 'check getSQL()');
+  
+  my @all_tables = $designer->getTables;
+  my @check_columns = qw(column1 col2);
+  is_deeply( [$all_tables[0]->column_names], \@check_columns )
