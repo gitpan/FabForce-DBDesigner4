@@ -1,7 +1,7 @@
 #!perl -T
 
 use Test::More tests => 4;
-use FabForce::DBDesigner4::DBIC;
+use FabForce::DBDesigner4;
 
 SKIP:{
     eval "use Perl::Critic";

@@ -34,3 +34,6 @@ Revision history for Perl extension FabForce::DBDesigner4.
     XML.pm:
       + major code cleanup: removed all the nasty global vars
       - removed use of Data::Dumper
+
+0.10 Sat Jul 28 10:45:22 2007
+    - bugfix: removed wrong prereq in 98_perl_critic.t
