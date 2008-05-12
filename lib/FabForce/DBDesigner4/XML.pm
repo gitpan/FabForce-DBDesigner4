@@ -6,9 +6,9 @@ use warnings;
 use XML::Twig;
 use XML::Writer;
 use IO::File;
-use FabForce::DBDesigner4::Table;
+use FabForce::DBDesigner4::Table qw(:const);
 
-our $VERSION     = '0.02';
+our $VERSION     = '0.03';
 
 sub new{
     my ($class) = @_;
@@ -132,11 +132,12 @@ sub _relation{
     my ($obj)     = grep{$_->name() eq $src}$self->_all_tables;
     my $f_id      = $self->_tableid( $rel->{att}->{DestTable} );
     my ($f_table) = grep{$_->name() eq $f_id}$self->_all_tables;
+    my $type      = $rel->{att}->{Kind};
     
     for my $relation(@relations){
         my ($owncol,$foreign) = split(/=/,$relation,2);
-        $obj->addRelation([1,$f_id.'.'.$foreign,$src.'.'.$owncol]);
-        $f_table->addRelation([1,$f_id.'.'.$foreign,$src.'.'.$owncol]);
+        $obj->addRelation(    [ 1, $f_id.'.'.$foreign, $src.'.'.$owncol, $type ]);
+        $f_table->addRelation([ 1, $f_id.'.'.$foreign, $src.'.'.$owncol, $type ]);
     }
 }# _relation
 

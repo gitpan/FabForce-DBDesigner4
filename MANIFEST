@@ -2,14 +2,24 @@ Changes
 Makefile.PL
 MANIFEST
 README
+
 t/FabForce-DBDesigner4.t
 t/test_pod_coverage.t
 t/test_pod.t
 t/test_manifest.t
 t/test.xml
 t/98_perl_critic.t
+t/constants.t
+
+t/data/identifying_1_to_1_relationship.xml
+t/data/identifying_1_to_n_relationship.xml
+t/data/n_to_m_relationshop.xml
+t/data/non_identifying_1_to_1_relationship.xml
+t/data/non_identifying_1_to_n_relationship.xml
+
 lib/FabForce/DBDesigner4.pm
 lib/FabForce/DBDesigner4/XML.pm
 lib/FabForce/DBDesigner4/SQL.pm
 lib/FabForce/DBDesigner4/Table.pm
-META.yml                                 Module meta-data (added by MakeMaker)
+
+META.yml

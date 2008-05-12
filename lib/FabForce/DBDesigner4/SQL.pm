@@ -4,9 +4,9 @@ use 5.006001;
 use strict;
 use warnings;
 use Carp;
-use FabForce::DBDesigner4::Table;
+use FabForce::DBDesigner4::Table qw(:const);
 
-our $VERSION     = '0.03';
+our $VERSION     = '0.04';
 our $ERROR       = 0;
 
 sub new{
