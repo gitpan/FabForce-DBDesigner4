@@ -37,3 +37,7 @@ Revision history for Perl extension FabForce::DBDesigner4.
 
 0.10 Sat Jul 28 10:45:22 2007
     - bugfix: removed wrong prereq in 98_perl_critic.t
+
+0.12 Tue May 13 12:14:22 2008
+    + added check for env variable RELEASE_TESTING in 98_perl_critic.t
+

@@ -4,6 +4,9 @@ use Test::More tests => 4;
 use FabForce::DBDesigner4;
 
 SKIP:{
+
+    skip 'Set RELEASE_TESTING=1 to run this test' => 4 if not $ENV{RELEASE_TESTING};
+
     eval "use Perl::Critic";
     skip "Perl::Critic required", 4 if $@;
 
