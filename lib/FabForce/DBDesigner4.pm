@@ -6,7 +6,7 @@ use Carp;
 use FabForce::DBDesigner4::XML;
 use FabForce::DBDesigner4::SQL;
 
-our $VERSION     = '0.12';
+our $VERSION     = '0.13';
 
 sub new{
   my ($class,%args) = @_;
@@ -41,17 +41,23 @@ sub parsefile{
 }# parsefile
 
 sub writeXML{
-  my ($self,$filename,$struct) = @_;
-  my $xml = FabForce::DBDesigner4::XML->new();
-  my $structForFile = $struct || $self->{structure} || '';
+  my ($self,$filename,$args) = @_;
+  
+  my $xml           = FabForce::DBDesigner4::XML->new();
+  my $structForFile = (delete $args->{struct}) || $self->{structure} || '';
+  
   $xml->writeXML($structForFile,$filename);
 }# writeXML
 
 sub writeSQL{
-  my ($self,$filename,$struct) = @_;
+  my ($self,$filename,$args) = @_;
+  
   my $sql = FabForce::DBDesigner4::SQL->new();
+  my $struct        = delete $args->{structure};
+  $args->{type}   ||= 'other';
   my $structForFile = $struct || $self->{structure} || '';
-  $sql->writeSQL($structForFile,$filename);
+  
+  $sql->writeSQL($structForFile, $filename, $args);
 }# writeSQL
 
 sub getTables{
@@ -60,9 +66,12 @@ sub getTables{
 }# getTables
 
 sub getSQL{
-    my ($self)  = @_;
-    my $sql     = FabForce::DBDesigner4::SQL->new();
-    my @creates = $sql->getSQL($self->{structure});
+    my ($self,$args)  = @_;
+    
+    my $sql         = FabForce::DBDesigner4::SQL->new();
+    $args->{type} ||= 'other';
+    my @creates     = $sql->getSQL($self->{structure},$args);
+    
     return @creates;
 }
 
@@ -82,7 +91,7 @@ FabForce::DBDesigner4 - Parse/Analyse XML-Files created by DBDesigner 4 (FabForc
   my $designer = FabForce::DBDesigner4->new();
   $designer->parsefile(xml => 'KESS.xml');
   $designer->writeXML('text_xml.xml');
-  $designer->writeSQL('text_sql.sql');
+  $designer->writeSQL('text_sql.sql',{ type => 'mysql' });
 
 =head1 DESCRIPTION
 

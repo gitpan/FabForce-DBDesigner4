@@ -5,7 +5,7 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test::More tests => 7;
+use Test::More tests => 3;
 use FindBin qw();
 use FabForce::DBDesigner4;
 use Data::Dumper;
@@ -23,15 +23,8 @@ ok(1); # If we made it this far, we're ok.
   my $file = $FindBin::Bin .'/test.xml';
   $designer->parsefile(xml => $file);
   
-  my @tables = $designer->getTables();
-  ok(scalar(@tables) == 1);
-  ok($tables[0]->name() eq 'Testtable');
-  
-  my $col = ($tables[0]->columns())[0];
-  ok($col eq 'column1 INTEGER NOT NULL AUTOINCREMENT');
-  
   my @creates = (qq~CREATE TABLE Testtable(
-  column1 INTEGER NOT NULL AUTOINCREMENT,
+  column1 INTEGER NOT NULL AUTO_INCREMENT,
   col2 VARCHAR(255) ,
   PRIMARY KEY(column1)
 );
@@ -39,9 +32,5 @@ ok(1); # If we made it this far, we're ok.
 ~);
   
   my $test = Dumper \@creates;
-  my $check = Dumper [$designer->getSQL()];
+  my $check = Dumper [$designer->getSQL({type => 'mysql'})];
   is($test, $check, 'check getSQL()');
-  
-  my @all_tables = $designer->getTables;
-  my @check_columns = qw(column1 col2);
-  is_deeply( [$all_tables[0]->column_names], \@check_columns )

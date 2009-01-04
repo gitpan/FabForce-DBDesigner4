@@ -10,6 +10,7 @@ t/test_manifest.t
 t/test.xml
 t/98_perl_critic.t
 t/constants.t
+t/mysql.t
 
 t/data/identifying_1_to_1_relationship.xml
 t/data/identifying_1_to_n_relationship.xml

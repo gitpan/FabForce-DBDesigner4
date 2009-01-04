@@ -61,6 +61,7 @@ sub columns{
                     if( defined $elem ){
                         $elem = 'VARCHAR(255)'              if $elem =~ /^varchar$/i;
                         $elem = "ENUM('1','0') DEFAULT '0'" if $elem =~ /^enum$/i;
+                        
                         $string .= " ".$elem;
                     }
                 }
