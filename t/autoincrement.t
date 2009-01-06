@@ -17,20 +17,20 @@ ok(1); # If we made it this far, we're ok.
 # Insert your test code below, the Test::More module is use()ed here so read
 # its man page ( perldoc Test::More ) for help writing this test script.
 
-  my $designer = FabForce::DBDesigner4->new();
-  ok(ref $designer eq 'FabForce::DBDesigner4');
-  
-  my $file = $FindBin::Bin .'/test.xml';
-  $designer->parsefile(xml => $file);
-  
-  my @creates = (qq~CREATE TABLE Testtable (
-  column1 INTEGER NOT NULL AUTO_INCREMENT,
+my $designer = FabForce::DBDesigner4->new();
+ok(ref $designer eq 'FabForce::DBDesigner4');
+
+my $file = $FindBin::Bin .'/test3.xml';
+$designer->parsefile(xml => $file);
+
+my @creates = (qq~CREATE TABLE test3 (
+  col1 VARCHAR(255) NOT NULL,
   col2 VARCHAR(255),
-  PRIMARY KEY(column1)
+  PRIMARY KEY(col1)
 );
 
 ~);
   
   my $test = Dumper \@creates;
-  my $check = Dumper [$designer->getSQL({type => 'mysql'})];
-  is($check, $test, 'check getSQL()');
+  my $check = Dumper [$designer->getSQL()];
+  is($test, $check, 'check getSQL()');

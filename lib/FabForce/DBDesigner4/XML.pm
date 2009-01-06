@@ -8,7 +8,7 @@ use XML::Writer;
 use IO::File;
 use FabForce::DBDesigner4::Table qw(:const);
 
-our $VERSION     = '0.03';
+our $VERSION     = '0.04';
 
 sub new{
     my ($class) = @_;
@@ -112,13 +112,23 @@ sub _column{
     my $name           = $col->{att}->{ColName};
     my $datatype       = _datatypes('id2name',$col->{att}->{idDatatype});
     my $notnull        = $col->{att}->{NotNull} ? 'NOT NULL' : '';
-    my $default        = $col->{att}->{DefaultValue} || '';
+    my $default        = $col->{att}->{DefaultValue};
     my $autoinc        = $col->{att}->{AutoInc} ? 'AUTOINCREMENT' : '';
     
+    if( $datatype !~ m!INT! ){
+        $autoinc = "";
+    }
+    
+    my $quotes         = ( defined $default and $default =~ m!^\d+(?:\.\d*)?$! ) ?
+                                    "" : "'";
+    
     my $info           = '';
-    $info .= $notnull.' '              if($notnull);
-    $info .= "DEFAULT '".$default."' " if($default);
-    $info .= $autoinc                  if($autoinc);
+    $info .= $notnull.' '              if $notnull;
+    $info .= sprintf "DEFAULT %s%s%s ", $quotes,$default,$quotes
+                                       if defined $default and $default ne '';
+    $info .= $autoinc                  if $autoinc;
+    
+    $info  =~ s!\s+\z!!;
     
     $self->_add_columns( $parent_table, {$name => [$datatype,$info]} );
     $self->_key( $parent_table, $name ) if $col->{att}->{PrimaryKey};

@@ -17,17 +17,17 @@ name: FabForce-DBDesigner4
 provides:
   FabForce::DBDesigner4:
     file: /lib/FabForce/DBDesigner4.pm
-    version: 0.13
+    version: 0.14
   FabForce::DBDesigner4::SQL:
     file: /lib/FabForce/DBDesigner4/SQL.pm
-    version: 0.05
+    version: 0.06
   FabForce::DBDesigner4::Table:
     file: /lib/FabForce/DBDesigner4/Table.pm
     version: 0.05
   FabForce::DBDesigner4::XML:
     file: /lib/FabForce/DBDesigner4/XML.pm
-    version: 0.03
+    version: 0.04
 resources:
   license: http://dev.perl.org/licenses
-version: 0.13
+version: 0.14
 

@@ -30,9 +30,9 @@ ok(1); # If we made it this far, we're ok.
   my $col = ($tables[0]->columns())[0];
   ok($col eq 'column1 INTEGER NOT NULL AUTOINCREMENT');
   
-  my @creates = (qq~CREATE TABLE Testtable(
+  my @creates = (qq~CREATE TABLE Testtable (
   column1 INTEGER NOT NULL AUTOINCREMENT,
-  col2 VARCHAR(255) ,
+  col2 VARCHAR(255),
   PRIMARY KEY(column1)
 );
 
@@ -40,7 +40,7 @@ ok(1); # If we made it this far, we're ok.
   
   my $test = Dumper \@creates;
   my $check = Dumper [$designer->getSQL()];
-  is($test, $check, 'check getSQL()');
+  is($check, $test, 'check getSQL()');
   
   my @all_tables = $designer->getTables;
   my @check_columns = qw(column1 col2);

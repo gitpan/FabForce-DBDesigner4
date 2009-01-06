@@ -6,7 +6,7 @@ use Carp;
 use FabForce::DBDesigner4::XML;
 use FabForce::DBDesigner4::SQL;
 
-our $VERSION     = '0.13';
+our $VERSION     = '0.14';
 
 sub new{
   my ($class,%args) = @_;

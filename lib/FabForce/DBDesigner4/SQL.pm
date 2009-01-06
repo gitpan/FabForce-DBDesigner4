@@ -6,7 +6,7 @@ use warnings;
 use Carp;
 use FabForce::DBDesigner4::Table qw(:const);
 
-our $VERSION     = '0.05';
+our $VERSION     = '0.06';
 our $ERROR       = 0;
 
 sub new{
@@ -76,7 +76,10 @@ sub getSQL{
             $foreign_keys = join(",\n  ",@relations).",\n  " if(scalar(@relations) > 0);
         }
         
-        my $stmt = "CREATE TABLE ".$tablename."(\n  ".join(",\n  ",@columns).",\n  ";
+        my $cols_string =  join(",\n  ",@columns);
+           $cols_string =~ s!\s+\z!!;
+        
+        my $stmt = "CREATE TABLE $tablename (\n  $cols_string,\n  ";
         $stmt   .= "PRIMARY KEY(".join(",",$table->key())."),\n  " if(scalar($table->key()) > 0);
         $stmt   .= $foreign_keys; #
         $stmt    =~ s!,\n\s\s\z!\n!;
