@@ -23,7 +23,7 @@ ok(1); # If we made it this far, we're ok.
   my $file = $FindBin::Bin .'/test.xml';
   $designer->parsefile(xml => $file);
   
-  my @creates = (qq~CREATE TABLE Testtable (
+  my @creates = (qq~CREATE TABLE `Testtable` (
   column1 INTEGER NOT NULL AUTO_INCREMENT,
   col2 VARCHAR(255),
   PRIMARY KEY(column1)

@@ -1,5 +1,28 @@
 Revision history for Perl extension FabForce::DBDesigner4.
 
+0.302  Fri Aug 14 10:39:12
+    + added Perl::Critic tests for *::SQL::Utils and *::SQL::Mysql
+    + Version bumps for changed files
+
+0.301  Wed Aug 12 12:55:23 2009
+    + reorder MANIFEST
+    - bugfix: take care of params for datatypes
+    + add tests for bugfix
+    + change license information to be more specific
+
+0.3    Wed Aug 12 10:44:52 2009
+    + add sql_options when creating sql. currently only mysql backend supports that
+
+0.201  Wed May 06 14:29:21 2009
+    + add test for mysql and drop tables
+    + minor bugfix in mysql module
+
+0.2  Tue May 05 16:55:12 2009
+    + remove sql parsing functions
+    + remove xml writing functions
+    + add mysql specific module
+    + update documentation
+
 0.14 Tue Jan 06 17:30:54 2009
     + bugfix in XML parsing: add default value even it is "0"
     + do not "AUTOINCREMENT" on non-numeric columns

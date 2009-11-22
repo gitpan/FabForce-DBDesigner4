@@ -20,18 +20,20 @@ ok(1); # If we made it this far, we're ok.
 my $designer = FabForce::DBDesigner4->new();
 ok(ref $designer eq 'FabForce::DBDesigner4');
 
-my $file = $FindBin::Bin .'/test2.xml';
+my $file = $FindBin::Bin .'/test3.xml';
 $designer->parsefile(xml => $file);
 
-my @creates = (qq~CREATE TABLE `test2` (
-  col1 INTEGER NOT NULL AUTOINCREMENT,
-  col2 INTEGER DEFAULT 0,
-  col3 VARCHAR(255) DEFAULT 'default',
+my @creates = (qq~DROP TABLE `test3`;
+
+~,
+qq~CREATE TABLE `test3` (
+  col1 VARCHAR(255) NOT NULL,
+  col2 VARCHAR(255),
   PRIMARY KEY(col1)
 );
 
 ~);
   
   my $test = Dumper \@creates;
-  my $check = Dumper [$designer->getSQL()];
-  is($check, $test, 'check getSQL()');
+  my $check = Dumper [$designer->getSQL({drop_tables => 1})];
+  is($test, $check, 'check getSQL()');

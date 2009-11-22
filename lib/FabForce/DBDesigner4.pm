@@ -6,7 +6,7 @@ use Carp;
 use FabForce::DBDesigner4::XML;
 use FabForce::DBDesigner4::SQL;
 
-our $VERSION     = '0.14';
+our $VERSION     = '0.302';
 
 sub new{
   my ($class,%args) = @_;
@@ -22,32 +22,17 @@ sub new{
 
 sub parsefile{
   my ($self,%args) = @_;
-
-  croak "only one filetype" if(defined $args{sql} and defined $args{xml});
-  $self->{sql} = $args{sql} if(defined $args{sql});
+  
   $self->{xml} = $args{xml} if(defined $args{xml});
 
-  if(defined $self->{sql}){
-    my $sql = FabForce::DBDesigner4::SQL->new();
-    $self->{structure} = $sql->parsefile($self->{sql});
-  }
-  elsif(defined $self->{xml}){
-    my $xml = FabForce::DBDesigner4::XML->new();
-    $self->{structure} = $xml->parsefile($self->{xml});
+  if( defined $self->{xml} ) {
+    my $xml = FabForce::DBDesigner4::XML->new;
+    $self->{structure} = $xml->parsefile( $self->{xml} );
   }
   else{
-    croak "No inputfile defined!"
+    croak "No valid filetype defined!"
   }
 }# parsefile
-
-sub writeXML{
-  my ($self,$filename,$args) = @_;
-  
-  my $xml           = FabForce::DBDesigner4::XML->new();
-  my $structForFile = (delete $args->{struct}) || $self->{structure} || '';
-  
-  $xml->writeXML($structForFile,$filename);
-}# writeXML
 
 sub writeSQL{
   my ($self,$filename,$args) = @_;
@@ -90,7 +75,6 @@ FabForce::DBDesigner4 - Parse/Analyse XML-Files created by DBDesigner 4 (FabForc
 
   my $designer = FabForce::DBDesigner4->new();
   $designer->parsefile(xml => 'KESS.xml');
-  $designer->writeXML('text_xml.xml');
   $designer->writeSQL('text_sql.sql',{ type => 'mysql' });
 
 =head1 DESCRIPTION
@@ -99,12 +83,10 @@ FabForce::DBDesigner4 is a module to analyse xml-files created
 by the Database-Design tool DBDesigner (Version 4) from
 FabForce (http://www.fabforce.net).
 
-
-You can also parse simple .sql-files to get the table structures
-off CREATE-statements.
+B<NOTICE>: As of version 0.2 you can not parse sql files any longer. You just
+can parse xml files created by DBDesigner. And you can't create XML files!
 
 =head1 METHODS
-
 
 =head2 new
 
@@ -113,24 +95,19 @@ off CREATE-statements.
   
 =head2 parsefile
 
-parse the input file (either SQL or XML (FabForce-format))
+parse the input file (XML - FabForce format )
 
   # parse a xml-file
   $designer->parsefile(xml => 'KESS.xml');
-  # parse a sql-file
-  $designer->parsefile(sql => 'database.sql');
-  
-=head2 writeXML
-
-prints the structure into a xml-file (FabForce-format)
-
-  $designer->writeXML('foo.xml');
   
 =head2 writeSQL
 
 print the structure into a sql-file
 
   $designer->writeSQL('foo.sql');
+  
+  # print "drop table statements"
+  $designer->writeSQL( 'foo.sql', { drop_tables => 1 } );
   
 =head2 getTables
 
@@ -143,6 +120,9 @@ returns an array of table-objects
 returns an array of CREATE statements. One element for each table.
 
   my @creates = $designer->getSQL();
+  
+  # get "drop table" statements in extra elements
+  my @creates = $designer->getSQL({ drop_table => 1 });
 
 =head1 DBDesigner4::Table
 
@@ -216,7 +196,7 @@ Methods of the table-objects
 
 =head1 DEPENDENCIES
 
-This module requires XML::Twig, XML::Writer and IO::File
+This module requires XML::Twig
 
 =head1 BUGS and COMMENTS
 
@@ -225,9 +205,7 @@ bugreports or comments on this module.
 
 =head1 SEE ALSO
 
-  XML::Twig
-  XML::Writer
-  IO::File
+  XML::Twig and IO::File
 
 =head1 AUTHOR
 
@@ -235,11 +213,11 @@ Renee Baecker, E<lt>module@renee-baecker.deE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2005 by Renee Baecker
+Copyright (C) 2005 - 2009 by Renee Baecker
 
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.6.1 or,
-at your option, any later version of Perl 5 you may have available.
+This program is free software; you can redistribute it and/or
+modify it under the terms of the Artistic License version 2.0.
 
+These conditions apply for all files in this package.
 
 =cut

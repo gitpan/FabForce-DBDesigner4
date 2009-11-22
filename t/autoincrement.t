@@ -23,7 +23,7 @@ ok(ref $designer eq 'FabForce::DBDesigner4');
 my $file = $FindBin::Bin .'/test3.xml';
 $designer->parsefile(xml => $file);
 
-my @creates = (qq~CREATE TABLE test3 (
+my @creates = (qq~CREATE TABLE `test3` (
   col1 VARCHAR(255) NOT NULL,
   col2 VARCHAR(255),
   PRIMARY KEY(col1)

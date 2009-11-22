@@ -30,7 +30,7 @@ ok(1); # If we made it this far, we're ok.
   my $col = ($tables[0]->columns())[0];
   ok($col eq 'column1 INTEGER NOT NULL AUTOINCREMENT');
   
-  my @creates = (qq~CREATE TABLE Testtable (
+  my @creates = (qq~CREATE TABLE `Testtable` (
   column1 INTEGER NOT NULL AUTOINCREMENT,
   col2 VARCHAR(255),
   PRIMARY KEY(column1)

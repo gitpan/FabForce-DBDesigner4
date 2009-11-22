@@ -4,11 +4,9 @@ use 5.006001;
 use strict;
 use warnings;
 use XML::Twig;
-use XML::Writer;
-use IO::File;
 use FabForce::DBDesigner4::Table qw(:const);
 
-our $VERSION     = '0.04';
+our $VERSION     = '0.1';
 
 sub new{
     my ($class) = @_;
@@ -17,54 +15,12 @@ sub new{
     
     $self->_reset_tables;
     $self->_is_fabforce( 0 );
-    $self->_id( 0 );
     $self->_reset_columns;
     $self->_reset_tableids;
     $self->_reset_relationsid;
     
     return $self;
 }# new
-
-sub writeXML{
-    my ($self,$structref,$file) = @_;
-    return unless(ref($structref) eq 'ARRAY');
-    
-    $self->_reset_tableids;
-    $self->_id( 0 );
-    $self->_reset_relationsid;
-    
-    my $fh = (defined $file) ? IO::File->new(">$file") : \*STDOUT;
-    my $xml = XML::Writer->new(OUTPUT => $fh, UNSAFE => 1, NEWLINE => 1);
-    $xml->xmlDecl('ISO-8859-1','yes');
-    $xml->startTag("DBMODEL",version => "4.0");
-    # general settings for DBDesigner
-    $xml->startTag("SETTINGS");
-    $xml->raw(_constants('DATATYPEGROUPS'));
-    $xml->raw(_constants('DATATYPES'));
-    $xml->raw(_constants('REGIONCOLORS'));
-    $xml->endTag("SETTINGS");
-    # metadata
-    $xml->startTag("METADATA");
-    $xml->startTag("TABLES");
-    $xml->raw(_printTables($self,$structref));
-    $xml->endTag("TABLES");
-    $xml->startTag("RELATIONS");
-    $xml->raw(_printRelations($self,$structref));
-    $xml->endTag("RELATIONS");
-    $xml->endTag("METADATA");
-    # plugindata
-    $xml->startTag("PLUGINDATA");
-    $xml->endTag("PLUGINDATA");
-    # querydata
-    $xml->startTag("QUERYDATA");
-    $xml->endTag("QUERYDATA");
-    # linked models
-    $xml->startTag("LINKEDMODELS");
-    $xml->endTag("LINKEDMODELS");
-    $xml->endTag("DBMODEL");
-    $xml->end();
-    $fh->close() if(ref($fh) ne 'GLOB');
-}# writeXML
 
 sub parsefile{
     my ($self,$filename) = @_;
@@ -111,6 +67,7 @@ sub _column{
     my $parent_table   = $col->{parent}->{parent}->{att}->{Tablename};
     my $name           = $col->{att}->{ColName};
     my $datatype       = _datatypes('id2name',$col->{att}->{idDatatype});
+    my $typeAttr       = $col->{att}->{DatatypeParams} ? $col->{att}->{DatatypeParams} : '';
     my $notnull        = $col->{att}->{NotNull} ? 'NOT NULL' : '';
     my $default        = $col->{att}->{DefaultValue};
     my $autoinc        = $col->{att}->{AutoInc} ? 'AUTOINCREMENT' : '';
@@ -118,6 +75,8 @@ sub _column{
     if( $datatype !~ m!INT! ){
         $autoinc = "";
     }
+
+    $datatype .= $typeAttr;
     
     my $quotes         = ( defined $default and $default =~ m!^\d+(?:\.\d*)?$! ) ?
                                     "" : "'";
@@ -154,152 +113,6 @@ sub _relation{
 sub _index{
     my ($self) = @_;
 }# _index
-
-sub _printTables{
-    my ($self,$struct) = @_;
-    my %optionselected = (0 => [1,5,6,6,19,20,33,34,35],
-                          1 => [1,2,3,4,5],
-                          );
-    my $string      = '';
-    # table attributes
-    my @att_order = qw(ID Tablename PrevTableName XPos YPos TableType TablePrefix 
-                       nmTable Temporary UseStandardInserts StandardInserts TableOptions 
-                       Comments Collapsed IsLinkedObject IDLinkedModel Obj_id_Linked OrderPos);
-                         
-    # column attributes
-    my @att_names = qw(ID ColName PrevColName Pos idDatatype DatatypeParams Width
-                       Prec PrimaryKey NotNull AutoInc IsForeignKey DefaultValue Comments);
-                       
-    for my $table(@{$struct}){
-        my $id = $self->_id;
-        $self->_id( $id+1 );
-        my $attributes = '';
-        my $tablename  = $table->name();
-        $self->_tableid( $self->_id, $tablename );
-        for my $att(@att_order){
-            my $value = '';
-            if($att eq 'ID'){
-              $value = $self->_id;
-            }
-            elsif($att eq 'Tablename'){
-              $value = $table->name();
-            }
-            elsif($att eq 'XPos'){
-              $value = ($table->coords())[0] || $self->_id * 20;
-            }
-            elsif($att eq 'YPos'){
-              $value = ($table->coords())[1] || $self->_id * 30;
-            }
-            elsif($att eq 'TableType'){
-              $value = 'MyISAM';
-            }
-            elsif($att eq 'PrevTableName'){
-                $value = 'Table_'.sprintf("%02d",$self->_id);
-            }
-            $attributes .= ' '.$att.'="'.$value.'"';
-        }
-        $string .= '<TABLE'.$attributes.">\n";
-        $string .= "<COLUMNS>\n";
-        my $col_position = 0;
-        for my $col($table->columns()){
-            my $id = $self->_id;
-            $self->_id( $id+1 );
-            my $col_att     = '';
-            my $columnname  = '';
-            my $datatype_id = 0;
-            for(@att_names){
-                my $value = '1';
-                if($_ eq 'IsForeignKey'){
-                }
-                elsif($_ eq 'ID'){
-                    $value = $self->_id;
-                }
-                elsif($_ eq 'ColName'){
-                    $value = (split(/\s/,$col,2))[0];
-                    $columnname = $value;
-                }
-                elsif($_ eq 'idDatatype'){
-                    my $dt = (split(/\s+/,$col,3))[1];
-                    $datatype_id = _datatypes('name2id',uc($dt));
-                }
-                elsif($_ eq 'PrimaryKey'){
-                    $value = grep{$_ eq $columnname}$table->key() ? 1 : 0;
-                }
-                elsif($_ eq 'NotNull'){
-                    $value = $col =~ /not\s+null/i ? 1 : 0;
-                }
-                elsif($_ eq 'AutoInc'){
-                    $value = $col =~ /autoincrement/i ? 1 : 0;
-                }
-                elsif($_ eq 'DefaultValue'){
-                    ($value) = $col =~ /default\s+([^\s]+)/i;
-                    $value ||= '';
-                }
-                $col_att .= " ".$_.'="'.$value.'"';
-            }
-            my $start = '<COLUMN'.$col_att.">\n";
-            $start   .= "  <OPTIONSELECTED>\n";
-            for my $val(0,1){
-                $start   .= '    <OPTIONSELECT Value="'.$val.'" />'."\n" for(grep{$_ == $datatype_id}@{$optionselected{$val}});
-            }
-            $start   .= "  </OPTIONSELECTED>\n";
-            $start   .= "</COLUMN>\n";
-            $string  .= $start;
-        
-            ++$col_position;
-        }
-        $string .= "</COLUMNS>\n";
-      
-        my @relations_start  = grep{$_->[2] =~ /^$tablename\./}$table->relations();
-        my @relations_end    = grep{$_->[1] =~ /^$tablename\./}$table->relations();
-        my $relations_string = '';
-      
-        if(@relations_start){
-            $relations_string = "<RELATIONS_START>\n";
-            for my $rel_start(@relations_start){
-                my $key = join('',@$rel_start);
-                my $relationid = $self->_id;
-                if( $self->_relationsid( $key ) ){
-                    $relationid = $self->_relationsid( $key );
-                }
-                else{
-                    my $id = $self->_id;
-                    $self->_relationsid( $key, $id );
-                    $self->_id( $id+1 );
-                }
-                $relations_string .= qq~  <RELATION_START ID="$relationid">\n~;
-            }
-            $relations_string .= "</RELATIONS_START>\n";
-        }
-      
-        if(@relations_end){
-            $relations_string .= "<RELATIONS_END>\n";
-            for my $rel_end(@relations_end){
-                my $key = join('',@$rel_end);
-                my $relationid = $self->_id;
-                if( $self->_relationsid( $key ) ){
-                    $relationid = $self->_relationsid( $key );
-                }
-                else{
-                    my $id = $self->_id;
-                    $self->_relationsid( $key, $id );
-                    $self->_id( $id+1 );
-                }
-                $relations_string .= qq~  <RELATION_END ID="$relationid">\n~;
-            }
-            $relations_string .= "</RELATIONS_END>\n";
-            $string .= $relations_string;
-        }
-        $string .= "</TABLE>\n";
-    }
-    return $string
-}# _printTable
-
-sub _id{
-    my ($self,$value) = @_;
-    $self->{_ID_} = $value if defined $value;
-    return $self->{_ID_};
-}
 
 sub _is_fabforce{
     my ($self,$value) = @_;
@@ -436,250 +249,23 @@ sub _datatypes{
       $value = $id2name{$key};
     }
     else{
-        #print ">>$key<<\n\n";
-        #print Dumper(\%name2id);
         $value = 35;
     }
     
     return $value;
 }# _datatypes
 
-sub _constants{
-    my ($name) = @_;
-    my %constants = (
-    DATATYPEGROUPS => qq~<DATATYPEGROUPS>
-<DATATYPEGROUP Name="Numeric Types" Icon="1" />
-<DATATYPEGROUP Name="Date and Time Types" Icon="2" />
-<DATATYPEGROUP Name="String Types" Icon="3" />
-<DATATYPEGROUP Name="Blob and Text Types" Icon="4" />
-<DATATYPEGROUP Name="User defined Types" Icon="5" />
-<DATATYPEGROUP Name="Geographic Types" Icon="6" />
-</DATATYPEGROUPS>~,
-    DATATYPES => qq~<DATATYPES>
-<DATATYPE ID="1" IDGroup="0" TypeName="TINYINT" Description="A very small integer. The signed range is -128 to 127. The unsigned range is 0 to 255." ParamCount="1" OptionCount="2" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="UNSIGNED" Default="1" />
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="2" IDGroup="0" TypeName="SMALLINT" Description="A small integer. The signed range is -32768 to 32767. The unsigned range is 0 to 65535." ParamCount="1" OptionCount="2" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="UNSIGNED" Default="1" />
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="3" IDGroup="0" TypeName="MEDIUMINT" Description="A medium-size integer. The signed range is -8388608 to 8388607. The unsigned range is 0 to 16777215." ParamCount="1" OptionCount="2" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="UNSIGNED" Default="1" />
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="4" IDGroup="0" TypeName="INT" Description="A normal-size integer. The signed range is -2147483648 to 2147483647. The unsigned range is 0 to 4294967295." ParamCount="1" OptionCount="2" ParamRequired="0" EditParamsAsString="0" SynonymGroup="1" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="UNSIGNED" Default="0" />
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="5" IDGroup="0" TypeName="INTEGER" Description="A normal-size integer. The signed range is -2147483648 to 2147483647. The unsigned range is 0 to 4294967295." ParamCount="1" OptionCount="2" ParamRequired="0" EditParamsAsString="0" SynonymGroup="1" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="UNSIGNED" Default="1" />
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="6" IDGroup="0" TypeName="BIGINT" Description="A large integer. The signed range is -9223372036854775808 to 9223372036854775807. The unsigned range is 0 to 18446744073709551615." ParamCount="1" OptionCount="2" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="UNSIGNED" Default="0" />
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="7" IDGroup="0" TypeName="FLOAT" Description="A small (single-precision) floating-point number. Cannot be unsigned. Allowable values are -3.402823466E+38 to -1.175494351E-38, 0, and 1.175494351E-38 to 3.402823466E+38." ParamCount="1" OptionCount="1" ParamRequired="1" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="precision" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="8" IDGroup="0" TypeName="FLOAT" Description="A small (single-precision) floating-point number. Cannot be unsigned. Allowable values are -3.402823466E+38 to -1.175494351E-38, 0, and 1.175494351E-38 to 3.402823466E+38." ParamCount="2" OptionCount="1" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-<PARAM Name="decimals" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="9" IDGroup="0" TypeName="DOUBLE" Description="A normal-size (double-precision) floating-point number. Cannot be unsigned. Allowable values are -1.7976931348623157E+308 to -2.2250738585072014E-308, 0, and 2.2250738585072014E-308 to 1.7976931348623157E+308." ParamCount="2" OptionCount="1" ParamRequired="0" EditParamsAsString="0" SynonymGroup="2" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-<PARAM Name="decimals" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="10" IDGroup="0" TypeName="DOUBLE PRECISION" Description="This is a synonym for DOUBLE." ParamCount="2" OptionCount="1" ParamRequired="0" EditParamsAsString="0" SynonymGroup="2" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-<PARAM Name="decimals" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="11" IDGroup="0" TypeName="REAL" Description="This is a synonym for DOUBLE." ParamCount="2" OptionCount="1" ParamRequired="0" EditParamsAsString="0" SynonymGroup="2" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-<PARAM Name="decimals" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="12" IDGroup="0" TypeName="DECIMAL" Description="An unpacked floating-point number. Cannot be unsigned. Behaves like a CHAR column." ParamCount="2" OptionCount="1" ParamRequired="0" EditParamsAsString="0" SynonymGroup="3" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-<PARAM Name="decimals" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="13" IDGroup="0" TypeName="NUMERIC" Description="This is a synonym for DECIMAL." ParamCount="2" OptionCount="1" ParamRequired="1" EditParamsAsString="0" SynonymGroup="3" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-<PARAM Name="decimals" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="ZEROFILL" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="14" IDGroup="1" TypeName="DATE" Description="A date. The supported range is \\a1000-01-01\\a to \\a9999-12-31\\a." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="15" IDGroup="1" TypeName="DATETIME" Description="A date and time combination. The supported range is \\a1000-01-01 00:00:00\\a to \\a9999-12-31 23:59:59\\a." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="16" IDGroup="1" TypeName="TIMESTAMP" Description="A timestamp. The range is \\a1970-01-01 00:00:00\\a to sometime in the year 2037. The length can be 14 (or missing), 12, 10, 8, 6, 4, or 2 representing YYYYMMDDHHMMSS, ... , YYYYMMDD, ... , YY formats." ParamCount="1" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-</PARAMS>
-</DATATYPE>
-<DATATYPE ID="17" IDGroup="1" TypeName="TIME" Description="A time. The range is \\a-838:59:59\\a to \\a838:59:59\\a." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="18" IDGroup="1" TypeName="YEAR" Description="A year in 2- or 4-digit format (default is 4-digit)." ParamCount="1" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-</PARAMS>
-</DATATYPE>
-<DATATYPE ID="19" IDGroup="2" TypeName="CHAR" Description="A fixed-length string (1 to 255 characters) that is always right-padded with spaces to the specified length when stored. values are sorted and compared in case-insensitive fashion according to the default character set unless the BINARY keyword is given." ParamCount="1" OptionCount="1" ParamRequired="1" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="BINARY" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="20" IDGroup="2" TypeName="VARCHAR" Description="A variable-length string (1 to 255 characters). Values are sorted and compared in case-sensitive fashion unless the BINARY keyword is given." ParamCount="1" OptionCount="1" ParamRequired="1" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="length" />
-</PARAMS>
-<OPTIONS>
-<OPTION Name="BINARY" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="21" IDGroup="2" TypeName="BIT" Description="This is a synonym for CHAR(1)." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="22" IDGroup="2" TypeName="BOOL" Description="This is a synonym for CHAR(1)." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="23" IDGroup="3" TypeName="TINYBLOB" Description="A column maximum length of 255 (2^8 - 1) characters. Values are sorted and compared in case-sensitive fashion." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="24" IDGroup="3" TypeName="BLOB" Description="A column maximum length of 65535 (2^16 - 1) characters. Values are sorted and compared in case-sensitive fashion." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="25" IDGroup="3" TypeName="MEDIUMBLOB" Description="A column maximum length of 16777215 (2^24 - 1) characters. Values are sorted and compared in case-sensitive fashion." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="26" IDGroup="3" TypeName="LONGBLOB" Description="A column maximum length of 4294967295 (2^32 - 1) characters. Values are sorted and compared in case-sensitive fashion." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="27" IDGroup="3" TypeName="TINYTEXT" Description="A column maximum length of 255 (2^8 - 1) characters." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="28" IDGroup="3" TypeName="TEXT" Description="A column maximum length of 65535 (2^16 - 1) characters." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="29" IDGroup="3" TypeName="MEDIUMTEXT" Description="A column maximum length of 16777215 (2^24 - 1) characters." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="30" IDGroup="3" TypeName="LONGTEXT" Description="A column maximum length of 4294967295 (2^32 - 1) characters." ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="31" IDGroup="3" TypeName="ENUM" Description="An enumeration. A string object that can have only one value, chosen from the list of values." ParamCount="1" OptionCount="0" ParamRequired="1" EditParamsAsString="1" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="values" />
-</PARAMS>
-</DATATYPE>
-<DATATYPE ID="32" IDGroup="3" TypeName="SET" Description="A set. A string object that can have zero or more values, each of which must be chosen from the list of values." ParamCount="1" OptionCount="0" ParamRequired="1" EditParamsAsString="1" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<PARAMS>
-<PARAM Name="values" />
-</PARAMS>
-</DATATYPE>
-<DATATYPE ID="33" IDGroup="4" TypeName="Varchar(20)" Description="" ParamCount="0" OptionCount="1" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<OPTIONS>
-<OPTION Name="BINARY" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="34" IDGroup="4" TypeName="Varchar(45)" Description="" ParamCount="0" OptionCount="1" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<OPTIONS>
-<OPTION Name="BINARY" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="35" IDGroup="4" TypeName="Varchar(255)" Description="" ParamCount="0" OptionCount="1" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-<OPTIONS>
-<OPTION Name="BINARY" Default="0" />
-</OPTIONS>
-</DATATYPE>
-<DATATYPE ID="36" IDGroup="5" TypeName="GEOMETRY" Description="Geographic Datatype" ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="38" IDGroup="5" TypeName="LINESTRING" Description="Geographic Datatype" ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="39" IDGroup="5" TypeName="POLYGON" Description="Geographic Datatype" ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="40" IDGroup="5" TypeName="MULTIPOINT" Description="Geographic Datatype" ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="41" IDGroup="5" TypeName="MULTILINESTRING" Description="Geographic Datatype" ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="42" IDGroup="5" TypeName="MULTIPOLYGON" Description="Geographic Datatype" ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-<DATATYPE ID="43" IDGroup="5" TypeName="GEOMETRYCOLLECTION" Description="Geographic Datatype" ParamCount="0" OptionCount="0" ParamRequired="0" EditParamsAsString="0" SynonymGroup="0" PhysicalMapping="0" PhysicalTypeName="" >
-</DATATYPE>
-</DATATYPES>~, 
-                  REGIONCOLORS => qq~<REGIONCOLORS>
-<REGIONCOLOR Color="Red=#FFEEEC" />
-<REGIONCOLOR Color="Yellow=#FEFDED" />
-<REGIONCOLOR Color="Green=#EAFFE5" />
-<REGIONCOLOR Color="Cyan=#ECFDFF" />
-<REGIONCOLOR Color="Blue=#F0F1FE" />
-<REGIONCOLOR Color="Magenta=#FFEBFA" />
-</REGIONCOLORS>~,
-
-                  );
-  return $constants{$name};
-}# _constants
-
 1;
 __END__
 =pod
+
+=head1 NAME
+
+FabForce::DBDesigner4::XML - parse XML file
+
+=head1 SYNOPSIS
+
+=head1 DESCRIPTION
 
 =head1 METHODS
 
@@ -688,3 +274,16 @@ __END__
 =head2 writeXML
 
 =head2 parsefile
+
+=head1 AUTHOR
+
+Renee Baecker, E<lt>module@renee-baecker.deE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2005 - 2009 by Renee Baecker
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the Artistic License version 2.0.
+
+=cut
