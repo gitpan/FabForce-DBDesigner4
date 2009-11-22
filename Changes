@@ -1,5 +1,9 @@
 Revision history for Perl extension FabForce::DBDesigner4.
 
+0.303  Sun Nov 22 13:30:22
+    + bumped version of FF::DBD::SQL, as the PAUSE indexer said, that a
+      previous version of FF::DBD had a higher version of FF::DBD::SQL included
+
 0.302  Fri Aug 14 10:39:12
     + added Perl::Critic tests for *::SQL::Utils and *::SQL::Mysql
     + Version bumps for changed files
