@@ -10,7 +10,7 @@ use FabForce::DBDesigner4::Table qw(:const);
 use FabForce::DBDesigner4::SQL::Mysql;
 use FabForce::DBDesigner4::SQL::Utils qw( get_foreign_keys );
 
-our $VERSION     = '0.7';
+our $VERSION     = 0.7;
 our $ERROR       = 0;
 
 sub new{
