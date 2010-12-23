@@ -6,7 +6,7 @@ use Carp;
 use FabForce::DBDesigner4::XML;
 use FabForce::DBDesigner4::SQL;
 
-our $VERSION     = '0.304';
+our $VERSION     = '0.306';
 
 sub new{
   my ($class,%args) = @_;
@@ -62,12 +62,17 @@ sub getSQL{
 
 1;
 
-__END__
 
+
+=pod
 
 =head1 NAME
 
-FabForce::DBDesigner4 - Parse/Analyse XML-Files created by DBDesigner 4 (FabForce)
+FabForce::DBDesigner4
+
+=head1 VERSION
+
+version 0.306
 
 =head1 SYNOPSIS
 
@@ -86,20 +91,24 @@ FabForce (http://www.fabforce.net).
 B<NOTICE>: As of version 0.2 you can not parse sql files any longer. You just
 can parse xml files created by DBDesigner. And you can't create XML files!
 
+=head1 NAME
+
+FabForce::DBDesigner4 - Parse/Analyse XML-Files created by DBDesigner 4 (FabForce)
+
 =head1 METHODS
 
 =head2 new
 
   # create a new instance
   my $designer = FabForce::DBDesigner4->new();
-  
+
 =head2 parsefile
 
 parse the input file (XML - FabForce format )
 
   # parse a xml-file
   $designer->parsefile(xml => 'KESS.xml');
-  
+
 =head2 writeSQL
 
 print the structure into a sql-file
@@ -108,7 +117,7 @@ print the structure into a sql-file
   
   # print "drop table statements"
   $designer->writeSQL( 'foo.sql', { drop_tables => 1 } );
-  
+
 =head2 getTables
 
 returns an array of table-objects
@@ -137,7 +146,7 @@ Methods of the table-objects
   $table->name('tablename');
   # get the tablename
   my $name = $table->name();
-  
+
 =head2 columns
 
   # set the tablecolumns
@@ -146,17 +155,17 @@ Methods of the table-objects
   
   # get the columns
   print $_,"\n" for($table->columns());
-  
+
 =head2 columnType
 
   # get datatype of n-th column (i.e. 3rd column)
   my $datatype = $table->columnType(3);
-  
+
 =head2 columnInfo
 
   # get info about n-th column (i.e. 4th column)
   print Dumper($table->columnInfo(4));
-  
+
 =head2 stringsToTableCols
 
   # maps column information to hash (needed for columns())
@@ -168,7 +177,7 @@ Methods of the table-objects
   # add the tablecolumn
   my $column = ['column1','int','not null'];
   $table->addColumn($column);
-  
+
 =head2 relations
 
   # set relations
@@ -180,7 +189,7 @@ Methods of the table-objects
 =head2 addRelation
 
   $table->addRelation([1,'startTable.startCol','targetTable.targetCol']);
-  
+
 =head2 removeRelation
 
   # removes a relation (i.e. 2nd relation)
@@ -220,4 +229,21 @@ modify it under the terms of the Artistic License version 2.0.
 
 These conditions apply for all files in this package.
 
+=head1 AUTHOR
+
+Renee Baecker <module@renee-baecker.de>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2010 by Renee Baecker.
+
+This is free software, licensed under:
+
+  The Artistic License 2.0
+
 =cut
+
+
+__END__
+
+

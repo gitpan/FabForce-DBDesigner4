@@ -1,19 +1,55 @@
-use 5.006001;
-use ExtUtils::MakeMaker;
-# See lib/ExtUtils/MakeMaker.pm for details of how to influence
-# the contents of the Makefile that is written.
-WriteMakefile(
-    NAME              => 'FabForce::DBDesigner4',
-    VERSION_FROM      => 'lib/FabForce/DBDesigner4.pm', # finds $VERSION
-    PREREQ_PM         => {
-        'XML::Twig'   => 3.32,
-        'IO::File'    => 1.1,
-        'Carp'        => 1.04,
-        'Exporter'    => 5.58,
-    }, # e.g., Module::Name => 1.1
-    ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM  => 'lib/FabForce/DBDesigner4.pm', # retrieve abstract from module
-       AUTHOR         => 'Renee Baecker <module@renee-baecker.de>') : ()),
-    ($ExtUtils::MakeMaker::VERSION >= 6.31 ?
-      (LICENSE        => 'artistic_2' ) : ()),
+
+use strict;
+use warnings;
+
+
+
+use ExtUtils::MakeMaker 6.31;
+
+
+
+my %WriteMakefileArgs = (
+  'ABSTRACT' => 'Parse/Analyse XML-Files created by DBDesigner 4 (FabForce)',
+  'AUTHOR' => 'Renee Baecker <module@renee-baecker.de>',
+  'BUILD_REQUIRES' => {},
+  'CONFIGURE_REQUIRES' => {
+    'ExtUtils::MakeMaker' => '6.31'
+  },
+  'DISTNAME' => 'FabForce-DBDesigner4',
+  'EXE_FILES' => [],
+  'LICENSE' => 'artistic_2',
+  'NAME' => 'FabForce::DBDesigner4',
+  'PREREQ_PM' => {
+    'Carp' => '1.04',
+    'Exporter' => '5.58',
+    'IO::File' => '1.1',
+    'XML::Twig' => '3.32',
+    'XML::Writer' => '0.6'
+  },
+  'VERSION' => '0.306',
+  'test' => {
+    'TESTS' => 't/*.t'
+  }
 );
+
+
+unless ( eval { ExtUtils::MakeMaker->VERSION(6.56) } ) {
+  my $br = delete $WriteMakefileArgs{BUILD_REQUIRES};
+  my $pp = $WriteMakefileArgs{PREREQ_PM};
+  for my $mod ( keys %$br ) {
+    if ( exists $pp->{$mod} ) {
+      $pp->{$mod} = $br->{$mod} if $br->{$mod} > $pp->{$mod};
+    }
+    else {
+      $pp->{$mod} = $br->{$mod};
+    }
+  }
+}
+
+delete $WriteMakefileArgs{CONFIGURE_REQUIRES}
+  unless eval { ExtUtils::MakeMaker->VERSION(6.52) };
+
+WriteMakefile(%WriteMakefileArgs);
+
+
+

@@ -250,7 +250,17 @@ sub _getForeignKeys{
 }# getForeignKeys
 
 1;
-__END__
+
+
+=pod
+
+=head1 NAME
+
+FabForce::DBDesigner4::Table
+
+=head1 VERSION
+
+version 0.306
 
 =head1 DBDesigner4::Table
 
@@ -265,7 +275,7 @@ Methods of the table-objects
   $table->name('tablename');
   # get the tablename
   my $name = $table->name();
-  
+
 =head2 columns
 
   # set the tablecolumns
@@ -274,17 +284,17 @@ Methods of the table-objects
   
   # get the columns
   print $_,"\n" for($table->columns());
-  
+
 =head2 columnType
 
   # get datatype of n-th column (i.e. 3rd column)
   my $datatype = $table->columnType(3);
-  
+
 =head2 columnInfo
 
   # get info about n-th column (i.e. 4th column)
   print Dumper($table->columnInfo(4));
-  
+
 =head2 stringsToTableCols
 
   # maps column information to hash (needed for columns())
@@ -354,4 +364,20 @@ Copyright (C) 2005 - 2009 by Renee Baecker
 This program is free software; you can redistribute it and/or
 modify it under the terms of the Artistic License version 2.0.
 
+=head1 AUTHOR
+
+Renee Baecker <module@renee-baecker.de>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2010 by Renee Baecker.
+
+This is free software, licensed under:
+
+  The Artistic License 2.0
+
 =cut
+
+
+__END__
+

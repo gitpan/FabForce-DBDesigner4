@@ -84,16 +84,25 @@ sub getSQL{
 
 1;
 
-__END__
+
+
 =pod
 
 =head1 NAME
 
-FabForce::DBDesigner4::XML - parse XML file
+FabForce::DBDesigner4::SQL
+
+=head1 VERSION
+
+version 0.306
 
 =head1 SYNOPSIS
 
 =head1 DESCRIPTION
+
+=head1 NAME
+
+FabForce::DBDesigner4::XML - parse XML file
 
 =head1 METHODS
 
@@ -114,4 +123,19 @@ Copyright (C) 2005 - 2009 by Renee Baecker
 This program is free software; you can redistribute it and/or
 modify it under the terms of the Artistic License version 2.0.
 
+=head1 AUTHOR
+
+Renee Baecker <module@renee-baecker.de>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2010 by Renee Baecker.
+
+This is free software, licensed under:
+
+  The Artistic License 2.0
+
 =cut
+
+
+__END__

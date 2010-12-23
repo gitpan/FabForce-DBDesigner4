@@ -50,11 +50,17 @@ sub drop_table {
 
 1;
 
-__END__
+
+
+=pod
 
 =head1 NAME
 
-FabForce::DBDesigner4::SQL::Mysql - create sql with mysql specific syntax
+FabForce::DBDesigner4::SQL::Mysql
+
+=head1 VERSION
+
+version 0.306
 
 =head1 SYNOPSIS
 
@@ -64,6 +70,10 @@ FabForce::DBDesigner4::SQL::Mysql - create sql with mysql specific syntax
 
 As each database system has its own syntax, it is important to provide functions
 for each system.
+
+=head1 NAME
+
+FabForce::DBDesigner4::SQL::Mysql - create sql with mysql specific syntax
 
 =head1 METHODS
 
@@ -103,3 +113,21 @@ This program is free software; you can redistribute it and/or
 modify it under the terms of the Artistic License version 2.0.
 
 =cut
+
+=head1 AUTHOR
+
+Renee Baecker <module@renee-baecker.de>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2010 by Renee Baecker.
+
+This is free software, licensed under:
+
+  The Artistic License 2.0
+
+=cut
+
+
+__END__
+
