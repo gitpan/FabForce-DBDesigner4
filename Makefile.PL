@@ -4,31 +4,31 @@ use warnings;
 
 
 
-use ExtUtils::MakeMaker 6.31;
+use ExtUtils::MakeMaker 6.30;
 
 
 
 my %WriteMakefileArgs = (
-  'ABSTRACT' => 'Parse/Analyse XML-Files created by DBDesigner 4 (FabForce)',
-  'AUTHOR' => 'Renee Baecker <module@renee-baecker.de>',
-  'BUILD_REQUIRES' => {},
-  'CONFIGURE_REQUIRES' => {
-    'ExtUtils::MakeMaker' => '6.31'
+  "ABSTRACT" => "Parse/Analyse XML-Files created by DBDesigner 4 (FabForce)",
+  "AUTHOR" => "Renee Baecker <module\@renee-baecker.de>",
+  "BUILD_REQUIRES" => {},
+  "CONFIGURE_REQUIRES" => {
+    "ExtUtils::MakeMaker" => "6.30"
   },
-  'DISTNAME' => 'FabForce-DBDesigner4',
-  'EXE_FILES' => [],
-  'LICENSE' => 'artistic_2',
-  'NAME' => 'FabForce::DBDesigner4',
-  'PREREQ_PM' => {
-    'Carp' => '1.04',
-    'Exporter' => '5.58',
-    'IO::File' => '1.1',
-    'XML::Twig' => '3.32',
-    'XML::Writer' => '0.6'
+  "DISTNAME" => "FabForce-DBDesigner4",
+  "EXE_FILES" => [],
+  "LICENSE" => "artistic_2",
+  "NAME" => "FabForce::DBDesigner4",
+  "PREREQ_PM" => {
+    "Carp" => "1.04",
+    "Exporter" => "5.58",
+    "IO::File" => "1.1",
+    "XML::Twig" => "3.32",
+    "XML::Writer" => "0.6"
   },
-  'VERSION' => '0.306',
-  'test' => {
-    'TESTS' => 't/*.t'
+  "VERSION" => "0.31",
+  "test" => {
+    "TESTS" => "t/*.t"
   }
 );
 

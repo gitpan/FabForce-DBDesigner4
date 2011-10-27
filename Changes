@@ -1,5 +1,9 @@
 Revision history for Perl extension FabForce::DBDesigner4.
 
+0.307  Thu Oct 27 2011
+    + add *::SQL::Sqlite to handle autoincrement in sqlite
+    + added tests for new module
+
 0.306  Sun Nov 28 17:12:13 2010
     + fix manifest check
 
