@@ -26,7 +26,7 @@ my %WriteMakefileArgs = (
     "XML::Twig" => "3.32",
     "XML::Writer" => "0.6"
   },
-  "VERSION" => "0.307",
+  "VERSION" => "0.32",
   "test" => {
     "TESTS" => "t/*.t"
   }

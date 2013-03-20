@@ -274,7 +274,7 @@ FabForce::DBDesigner4::Table
 
 =head1 VERSION
 
-version 0.307
+version 0.32
 
 =head1 DBDesigner4::Table
 

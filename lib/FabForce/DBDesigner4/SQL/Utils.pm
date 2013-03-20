@@ -35,6 +35,11 @@ sub get_foreign_keys{
 
 
 
+
+
+
+
+
 =pod
 
 =head1 NAME
@@ -43,7 +48,7 @@ FabForce::DBDesigner4::SQL::Utils
 
 =head1 VERSION
 
-version 0.307
+version 0.32
 
 =head1 SYNOPSIS
 
@@ -53,6 +58,14 @@ version 0.307
 
 As each database system has its own syntax, it is important to provide functions
 for each system.
+
+=head1 NAME
+
+FabForce::DBDesigner4::SQL::Utils
+
+=head1 VERSION
+
+version 0.31
 
 =head1 NAME
 
@@ -73,7 +86,17 @@ Copyright (C) 2005 - 2009 by Renee Baecker
 This program is free software; you can redistribute it and/or
 modify it under the terms of the Artistic License version 2.0.
 
-=cut
+=head1 AUTHOR
+
+Renee Baecker <module@renee-baecker.de>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2010 by Renee Baecker.
+
+This is free software, licensed under:
+
+  The Artistic License 2.0
 
 =head1 AUTHOR
 
