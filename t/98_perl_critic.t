@@ -1,11 +1,11 @@
 #!perl -T
 
-use Test::More tests => 7;
+use Test::More tests => 6;
 use FabForce::DBDesigner4;
 
 SKIP:{
 
-    skip 'Set RELEASE_TESTING=1 to run this test' => 7 if not $ENV{RELEASE_TESTING};
+    skip 'Set RELEASE_TESTING=1 to run this test' => 6 if not $ENV{RELEASE_TESTING};
 
     eval "use Perl::Critic";
     skip "Perl::Critic required", 6 if $@;
@@ -23,7 +23,5 @@ SKIP:{
     is_deeply(\@violations5,[],'Perl::Critic');
     my @violations6 = $pc->critique($INC{'FabForce/DBDesigner4/SQL/Utils.pm'});
     is_deeply(\@violations6,[],'Perl::Critic');
-    my @violations7 = $pc->critique($INC{'FabForce/DBDesigner4/SQL/Sqlite.pm'});
-    is_deeply(\@violations7,[],'Perl::Critic');
 }
 

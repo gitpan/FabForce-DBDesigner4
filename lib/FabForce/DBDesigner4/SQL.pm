@@ -8,10 +8,9 @@ use IO::File;
 
 use FabForce::DBDesigner4::Table qw(:const);
 use FabForce::DBDesigner4::SQL::Mysql;
-use FabForce::DBDesigner4::SQL::Sqlite;
 use FabForce::DBDesigner4::SQL::Utils qw( get_foreign_keys );
 
-our $VERSION     = 0.8;
+our $VERSION     = 0.7;
 our $ERROR       = 0;
 
 sub new{
@@ -42,17 +41,11 @@ sub getSQL{
     
     my @statements;
     
-    my %types = (
-        mysql  => 'FabForce::DBDesigner4::SQL::Mysql',
-        sqlite => 'FabForce::DBDesigner4::SQL::Sqlite',
-    );
-    
     for my $table(@$structure){
         
-        if( $args->{type} and exists $types{ $args->{type} } ) {
-            my $name   = $types{ $args->{type} };
-            my $drop   = $name->drop_table( $table, $args->{sql_options} );
-            my $create = $name->create_table( $table, $args->{sql_options} );
+        if( $args->{type} and $args->{type} eq 'mysql' ) {
+            my $drop   = FabForce::DBDesigner4::SQL::Mysql->drop_table( $table, $args->{sql_options} );
+            my $create = FabForce::DBDesigner4::SQL::Mysql->create_table( $table, $args->{sql_options} );
             
             push @statements, $drop if $args->{drop_tables};
             push @statements, $create;
@@ -101,7 +94,7 @@ FabForce::DBDesigner4::SQL
 
 =head1 VERSION
 
-version 0.31
+version 0.307
 
 =head1 SYNOPSIS
 
@@ -140,7 +133,7 @@ This software is Copyright (c) 2010 by Renee Baecker.
 
 This is free software, licensed under:
 
-  The Artistic License 2.0
+  The Artistic License 2.0 (GPL Compatible)
 
 =cut
 
