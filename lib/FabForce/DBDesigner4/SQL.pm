@@ -105,7 +105,7 @@ FabForce::DBDesigner4::SQL
 
 =head1 VERSION
 
-version 0.32
+version 0.33
 
 =head1 SYNOPSIS
 

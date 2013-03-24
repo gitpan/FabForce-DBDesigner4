@@ -8,7 +8,7 @@ use Carp;
 use FabForce::DBDesigner4::XML;
 use FabForce::DBDesigner4::SQL;
 
-our $VERSION     = '0.32';
+our $VERSION     = '0.33';
 
 sub new{
   my ($class,%args) = @_;
@@ -74,7 +74,7 @@ FabForce::DBDesigner4 - Parse/Analyse XML-Files created by DBDesigner 4 (FabForc
 
 =head1 VERSION
 
-version 0.32
+version 0.33
 
 =head1 SYNOPSIS
 
@@ -200,6 +200,8 @@ Methods of the table-objects
   # get the primary key
   print "the primary key contains these columns:\n";
   print $_,"\n" for($table->key());
+
+=head2 column_details
 
 =head1 DEPENDENCIES
 
